@@ -36,6 +36,12 @@
     MOŽNOSTI
         --help 
             Vypíše pomocnú hlášku pre skript parse.php");
+
+    function param_err():void
+    {
+        error_log("CHYBA: Je možné zadať maximálne jeden argument\n");
+        exit(EXIT_PARAM); 
+    }
     function head_err():void
     {
         error_log("CHYBA: Chýbajúca alebo chybná hlavička\n");
@@ -332,14 +338,12 @@
         }
         else
         {
-            error_log("CHYBA: Text zadaného argumentu je chybný\n");
-            exit(EXIT_PARAM); 
+            param_err();
         }
     }
     elseif ($argc > 2) 
     {
-        error_log("CHYBA: Je možné zadať maximálne jeden argument\n");
-        exit(EXIT_PARAM);   
+        param_err();
     }
 
     $header_flag = false;
