@@ -87,6 +87,33 @@ function syntax_err(): void
 }
 
 /**
+ * Overí vstupné parametre skriptu parse.php
+ * @param int $argc Počet vstupných argumentov
+ * @param array $argv Pole argumentov
+ * @return void
+ */
+function arg_check(int $argc,array $argv):void
+{
+    /**Overenie argumentov */
+    if ($argc === 2)
+    {
+        if ($argv[1] == "--help")
+        {
+            echo (HELP_STRING . "\n");
+            exit(EXIT_SUCCESS);
+        }
+        else
+        {
+            param_err();
+        }
+    }
+    elseif ($argc > 2)
+    {
+        param_err();
+    }
+}
+
+/**
  * Overenie ⟨var⟩ podľa regulárneho výrazu
  * @param string $token Overovaný token
  * @return void
@@ -97,7 +124,6 @@ function var_check(string $token): void
     {
         syntax_err();
     }
-    return;
 }
 
 /**
@@ -111,7 +137,6 @@ function label_check(string $token): void
     {
         syntax_err();
     }
-    return;
 }
 
 /**
@@ -125,7 +150,6 @@ function symb_check(string $token): void
     {
         syntax_err();
     }
-    return;
 }
 
 /**
@@ -139,7 +163,6 @@ function type_check(string $token): void
     {
         syntax_err();
     }
-    return;
 }
 
 /**
@@ -396,26 +419,11 @@ function create_XML(array $stream, int $operand_count, int $inst_number, ?string
     }
 }
 
-/**Overenie argumentov */
-if ($argc == 2)
-{
-    if ($argv[1] == "--help")
-    {
-        echo (HELP_STRING . "\n");
-        exit(EXIT_SUCCESS);
-    }
-    else
-    {
-        param_err();
-    }
-}
-elseif ($argc > 2)
-{
-    param_err();
-}
-
 /** @var $header_flag - Značí prítomnosť hlavičky - IPPcode23 */
 $header_flag = false;
+
+/**Overenie vstupných argumentov skriptu */
+arg_check($argc,$argv);
 
 /**Spracovanie inštrukcií zo štandardného vstupu */
 while ($line = fgets(STDIN))
@@ -462,7 +470,6 @@ while ($line = fgets(STDIN))
     {
         if (!empty($clean[$i]))
         {
-
             $clean[$counter++] = $clean[$i];
         }
     }
@@ -577,4 +584,5 @@ if ($header_flag === false)
 /**Vypísanie XML reprezentácie kódu na štandardný výstup */
 xmlwriter_end_document($xml);
 echo xmlwriter_output_memory($xml);
+exit(EXIT_SUCCESS);
 ?>
