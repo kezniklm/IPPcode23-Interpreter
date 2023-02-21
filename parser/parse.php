@@ -36,12 +36,17 @@
     MOŽNOSTI
         --help 
             Vypíše pomocnú hlášku pre skript parse.php");
-
+    function head_err():void
+    {
+        error_log("CHYBA: Chýbajúca alebo chybná hlavička\n");
+        exit(EXIT_HEADER);
+    }
     function opcode_err():void
     {
         error_log("CHYBA: Zle zapísaný operačný kód v zdrojovom kóde zapísanom v IPPcode23\n"); 
         exit(EXIT_OPCODE);
     }
+
     function syntax_err(): void
     {
         error_log("CHYBA: Syntaktická chyba zdrojového kódu zapísaného v IPPcode23\n"); 
@@ -399,8 +404,7 @@
         {
             if ($clean[0] !== ".IPPcode23")
             {
-                error_log("CHYBA: Chýbajúca alebo chybná hlavička\n");
-                exit(EXIT_HEADER);
+                head_err();
             }
             else 
             {
@@ -486,6 +490,11 @@
             default:
             opcode_err();
         }
+    }
+
+    if($header_flag === false)
+    {
+        head_err();
     }
     
     xmlwriter_end_document($xml);
