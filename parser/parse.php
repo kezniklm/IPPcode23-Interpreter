@@ -171,7 +171,7 @@ function type_check(string $token): void
  * @param int $operand_count Počet argumentov
  * @return void
  */
-function check_arg_number(array $stream, int $operand_count): void
+function check_op_number(array $stream, int $operand_count): void
 {
     switch ($operand_count):
         case ZERO_OPS:
@@ -503,19 +503,19 @@ while ($line = fgets(STDIN))
         case "POPFRAME":
         case "RETURN":
         case "BREAK":
-            check_arg_number($clean, ZERO_OPS);
+            check_op_number($clean, ZERO_OPS);
             create_XML($clean, ZERO_OPS, $instruction++, NULL, NULL, NULL);
             break;
         case "DEFVAR":
         case "POPS":
-            check_arg_number($clean, ONE_OP);
+            check_op_number($clean, ONE_OP);
             var_check($clean[FIRST_OP]);
             create_XML($clean, ONE_OP, $instruction++, "var", NULL, NULL);
             break;
         case "LABEL":
         case "CALL":
         case "JUMP":
-            check_arg_number($clean, ONE_OP);
+            check_op_number($clean, ONE_OP);
             label_check($clean[FIRST_OP]);
             create_XML($clean, ONE_OP, $instruction++, "label", NULL, NULL);
             break;
@@ -523,7 +523,7 @@ while ($line = fgets(STDIN))
         case "WRITE":
         case "EXIT":
         case "DPRINT":
-            check_arg_number($clean, ONE_OP);
+            check_op_number($clean, ONE_OP);
             symb_check($clean[FIRST_OP]);
             create_XML($clean, ONE_OP, $instruction++, "symb", NULL, NULL);
             break;
@@ -532,13 +532,13 @@ while ($line = fgets(STDIN))
         case "STRLEN":
         case "TYPE":
         case "NOT":
-            check_arg_number($clean, TWO_OPS);
+            check_op_number($clean, TWO_OPS);
             var_check($clean[FIRST_OP]);
             symb_check($clean[SECOND_OP]);
             create_XML($clean, TWO_OPS, $instruction++, "var", "symb", NULL);
             break;
         case "READ":
-            check_arg_number($clean, TWO_OPS);
+            check_op_number($clean, TWO_OPS);
             var_check($clean[FIRST_OP]);
             type_check($clean[SECOND_OP]);
             create_XML($clean, TWO_OPS, $instruction++, "var", "type", NULL);
@@ -556,7 +556,7 @@ while ($line = fgets(STDIN))
         case "CONCAT":
         case "GETCHAR":
         case "SETCHAR":
-            check_arg_number($clean, THREE_OPS);
+            check_op_number($clean, THREE_OPS);
             var_check($clean[FIRST_OP]);
             symb_check($clean[SECOND_OP]);
             symb_check($clean[THIRD_OP]);
@@ -564,7 +564,7 @@ while ($line = fgets(STDIN))
             break;
         case "JUMPIFEQ":
         case "JUMPIFNEQ":
-            check_arg_number($clean, THREE_OPS);
+            check_op_number($clean, THREE_OPS);
             label_check($clean[FIRST_OP]);
             symb_check($clean[SECOND_OP]);
             symb_check($clean[THIRD_OP]);
