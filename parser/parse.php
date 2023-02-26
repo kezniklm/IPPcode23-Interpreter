@@ -1,5 +1,6 @@
 <?php
-/** @file parse.php
+/** 
+ * @file parse.php
  * 
  * @brief Lexikálny a syntaktický analyzátor zdrojového kódu v jazyku IPPcode23
  * 
