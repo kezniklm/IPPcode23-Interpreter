@@ -133,7 +133,7 @@ function var_check(string $token): void
  */
 function label_check(string $token): void
 {
-    if (!preg_match('/^(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)+$/', $token))
+    if (!preg_match('/^(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$/', $token))
     {
         syntax_err();
     }
