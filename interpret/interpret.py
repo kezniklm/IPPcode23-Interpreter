@@ -60,6 +60,9 @@ class Exit:
     EXIT_OUTPUT = 12
     EXIT_XML_FORMAT = 31
     EXIT_XML_STRUCTURE = 32
+    EXIT_SEMANTIC = 52
+    EXIT_VARIABLE = 54
+    EXIT_FRAME = 55
 
     def __init__(self, type, help=None):
         err_message = ""
@@ -76,6 +79,12 @@ class Exit:
                 err_message = "Chybný XML formát vo vstupnom súbore"
             case self.EXIT_XML_STRUCTURE:
                 err_message = "Chybná štruktúra XML"
+            case self.EXIT_SEMANTIC:
+                err_message = "Chyba pri sémantických kontrolách vstupného kódu v IPPcode23"
+            case self.EXIT_VARIABLE:
+                err_message = "Chyba - prístup k neexistujúcej premennej"
+            case self.EXIT_FRAME:
+                err_message = "Chyba - prístup k neexistujúcemu rámcu"
             case _:
                 err_message = "Zadaný zlý chybový kód"
 
@@ -122,7 +131,8 @@ class xml():
             if re.match(r'arg[1-3]$', child.tag):
                 arg_num += 1
             elif child.tag == "instruction":
-                if "order" not in child.attrib or not re.match(r'^[1-9][0-9]*$', child.attrib['order']) or "opcode" not in child.attrib or child.attrib['opcode'] not in Instruction.list:
+
+                if "order" not in child.attrib or not re.match(r'^[1-9][0-9]*$', child.attrib['order']) or "opcode" not in child.attrib or child.attrib['opcode'].upper() not in Instruction.list:
                     Exit(Exit.EXIT_XML_STRUCTURE)
                 else:
                     order_list.append(child.attrib['order'])
@@ -138,11 +148,11 @@ class xml():
         if (len(order_list) != len(set(order_list))):
             Exit(Exit.EXIT_XML_STRUCTURE)
 
-        
+         # TODO check xml version and encoding
 
     def arg_count(self, last_instruction):
 
-        match last_instruction:
+        match last_instruction.upper():
             case "CREATEFRAME" | "PUSHFRAME" | "POPFRAME" | "RETURN" | "BREAK":
                 arg_min = 0
             case "POPS" | "DEFVAR":
@@ -155,11 +165,12 @@ class xml():
                 arg_min = 2
             case "READ":
                 arg_min = 2
-            case "ADD" | "SUB" | "MUL" | "IDIV" | "LT" | "GT" | "EQ" | "OR" | "AND" | "STR2INT" | "CONCAT" | "GETCHAR" | "SETCHAR":
+            case "ADD" | "SUB" | "MUL" | "IDIV" | "LT" | "GT" | "EQ" | "OR" | "AND" | "STRI2INT" | "CONCAT" | "GETCHAR" | "SETCHAR":
                 arg_min = 3
             case "JUMPIFEQ" | "JUMPIFNEQ":
                 arg_min = 3
             case _:
+
                 Exit(Exit.EXIT_XML_STRUCTURE)
         return arg_min
 
@@ -170,7 +181,7 @@ class xml():
         self.instruction_list = []
         order = 0
         instruction_order = 0
-        arg1 =""
+        arg1 = ""
         arg2 = ""
         arg3 = ""
         for token in self.root.iter():
@@ -184,24 +195,25 @@ class xml():
                         if re.match(r'arg1$', temp_token.tag):
                             if "type" in temp_token.attrib and temp_token.attrib.get("type") != "":
                                 args_list.insert(0, temp_token.attrib)
-                                arg1 = temp_token.text
+                                arg1 = re.sub(r"\s+", "", str(temp_token.text))
                             else:
                                 Exit(Exit.EXIT_XML_STRUCTURE)
                         elif re.match(r'arg2$', temp_token.tag):
                             if "type" in temp_token.attrib and temp_token.attrib.get("type") != "":
                                 args_list.insert(0, temp_token.attrib)
-                                arg2 = temp_token.text
+                                arg2 = re.sub(r"\s+", "", str(temp_token.text))
                             else:
                                 Exit(Exit.EXIT_XML_STRUCTURE)
                         elif re.match(r'arg3$', temp_token.tag):
                             if "type" in temp_token.attrib and temp_token.attrib.get("type") != "":
                                 args_list.insert(0, temp_token.attrib)
-                                arg3 = temp_token.text
+                                arg3 = re.sub(r"\s+", "", str(temp_token.text))
                             else:
                                 Exit(Exit.EXIT_XML_STRUCTURE)
             if instruction_number == 1:
                 instruction_number = 0
-                new_Instruction = Instruction(instruction, order, args_list,arg1,arg2,arg3)
+                new_Instruction = Instruction(
+                    instruction, order, args_list, arg1, arg2, arg3)
                 self.instruction_list.append(new_Instruction)
                 instruction = ""
                 args_list = []
@@ -211,7 +223,8 @@ class xml():
 
     def sort(self):
         """Sort"""
-        self.instruction_list.sort(key=lambda x: x.order)
+        self.instruction_list = sorted(
+            self.instruction_list, key=lambda x: int(x.order))
 
 
 class Instruction:
@@ -253,7 +266,7 @@ class Instruction:
         "JUMPIFNEQ": ["label", "symb", "symb"]
     }
 
-    def __init__(self, opcode, order, list_of_args,arg1,arg2,arg3):
+    def __init__(self, opcode, order, list_of_args, arg1, arg2, arg3):
         self.opcode = opcode
         self.order = order
         self.args = list_of_args
@@ -261,13 +274,22 @@ class Instruction:
         self.arg2 = arg2
         self.arg3 = arg3
 
-
     def createFrame(self, frame):
         frame.create()
-    def pushFrame(self,frame):
+
+    def pushFrame(self, frame):
         frame.push()
-    def defVar(self,frame):
+
+    def popFrame(self, frame):
+        frame.pop()
+
+    def defVar(self, frame):
         frame.defVar(self)
+    
+    def pushs(self,frame,stack):
+        stack.pushs(self,frame)
+        
+        
         
 
 
@@ -277,16 +299,18 @@ class Interpret:
         self.Instruction_list = xml.instruction_list
         self.counter = 0
         self.frame = Frame()
+        self.stack = Stack()
 
     def handleInstructions(self):
         for instruction in self.Instruction_list:
+            # print(instruction.order)
             match instruction.opcode:
                 case "CREATEFRAME":
                     instruction.createFrame(self.frame)
                 case "PUSHFRAME":
                     instruction.pushFrame(self.frame)
                 case "POPFRAME":
-                    instruction.popFrame(self.frame) #todo
+                    instruction.popFrame(self.frame)
                 case "RETURN":
                     print()
                 case "BREAK":
@@ -302,58 +326,112 @@ class Interpret:
                 case "JUMP":
                     print()
                 case "PUSHS":
-                    print()
+                    instruction.pushs(self.frame,self.stack)
                 case "WRITE":
                     print()
                 case "EXIT":
                     print()
                 case "DPRINT":
                     print()
-                
-                    
 
-
+class Stack:
+    def __init__(self):
+        self.dataStack = []
+    
+    def pushs(self,instr,frame):
+        frame.isDefined(instr)
+        print ("k")
+        
 
 class Frame:
     def __init__(self):
-        self.frameStack = {"GF":[],"LF":[],"TF":[]}
-        self.temp_frame = []
-        
-    def defVar(self,instr):
+        self.frame_now = {"GF": [], "LF": [], "TF": []}
+        self.frameStack = []
+        self.local_frame = False
+        self.temp_frame = False
+
+    def defVar(self, instr):
         if re.match(r'GF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', instr.arg1):
-           self.frameStack["GF"].append(var(instr.arg1,"GF"))
+            self.isRedefined(instr, "GF")
+            self.frame_now["GF"].append(var(instr.arg1, "GF"))
         elif re.match(r'LF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', instr.arg1):
-            self.frameStack["LF"].append(var(instr.arg1,"LF"))
+            self.isFrame("LF")
+            self.isRedefined(instr, "LF")
+            self.frame_now["LF"].append(var(instr.arg1, "LF"))
         elif re.match(r'TF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', instr.arg1):
-            self.frameStack["TF"].append(var(instr.arg1,"TF"))
-            #print(self.frameStack["TF"][0].frame)
+            self.isFrame("TF")
+            self.isRedefined(instr, "TF")
+            self.frame_now["TF"].append(var(instr.arg1, "TF"))
         else:
             Exit(Exit.EXIT_XML_STRUCTURE)
+
     def create(self):
-        self.temp_frame = []
-        
+        self.temp_frame = True
+        self.frame_now["TF"].clear()
+
     def push(self):
-        self.frameStack["LF"] = self.temp_frame
-        self.temp_frame = []
-        # + check ci nebol pouzity ramec
+        self.isFrame("TF")
+        if self.local_frame == True:
+            self.frameStack.append(self.frame_now["LF"])
+            self.frame_now["LF"].clear()
+        for variable in self.frame_now["TF"]:
+            variable.name = re.sub("^TF", "LF", variable.name)
+            self.frame_now["LF"].append(variable)
+        self.temp_frame = False
+        self.local_frame = True
+
     def pop(self):
-        self.temp_frame = self.frameStack["LF"]
-        
+        self.isFrame("LF")
+        self.frame_now["TF"].clear()
+        for variable in self.frame_now["LF"]:
+            variable.name = re.sub("^LF", "TF", variable.name)
+            self.frame_now["TF"].append(variable)
+        self.temp_frame = True
+        if not self.frameStack:
+            self.local_frame = False
+            self.frame_now["LF"].clear()
+        else:
+            self.local_frame = True
+            self.frameStack.pop()
+
+    def isFrame(self, frame):
+        if frame == "TF" and self.temp_frame == False:
+            Exit(Exit.EXIT_FRAME)
+        elif frame == "LF" and self.local_frame == False:
+            Exit(Exit.EXIT_FRAME)
+
+    #is redefined?
+    def isRedefined(self, instr, frame):
+        for instruction in self.frame_now[frame]:
+            if instruction.name == instr.arg1:
+                Exit(Exit.EXIT_SEMANTIC)
+                
+    def isDefined(self,instr):
+        found = False
+        for instruction in self.frame_now[str(self.whichFrame(instr))]:
+            if instruction.name == instr.arg1:
+                return True
+        if found == False:
+            Exit(Exit.EXIT_VARIABLE)
+                
+    def whichFrame(self,instr):
+        if re.search('^GF',instr.arg1):
+            return "GF"
+        elif re.search('^TF',instr.arg1):
+            return "TF"
+        elif re.search('^LF',instr.arg1):
+            return "LF"
+        else:
+            print ("Asi error")
+
+       
+
+
 class var:
-    def __init__(self,name,frame,type=None):
+    def __init__(self, name, frame, type=None):
         self.name = name
         self.frame = frame
         self.type = type
-    def isDefined(self,frame,name):
-        print()
-        #for instuction in frame.frameStack:
-            
-        
-        
-        
-
-
-        
 
 
 class Program:
