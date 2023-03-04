@@ -93,7 +93,7 @@ function syntax_err(): void
  * @param array $argv Pole argumentov
  * @return void
  */
-function arg_check(int $argc,array $argv):void
+function arg_check(int $argc, array $argv): void
 {
     /**Overenie argumentov */
     if ($argc === 2)
@@ -147,7 +147,7 @@ function label_check(string $token): void
  */
 function symb_check(string $token): void
 {
-    if (!(preg_match('/^(LF|TF|GF)@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)+[0-9]*(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$/', $token) || preg_match('/^string@([^\s#\\\\]|\\\\\d{3})*$$/', $token) || preg_match('/^bool@(true|false)$/', $token) || preg_match('/^nil@nil$/', $token) || preg_match('/^int@(\+|-){0,1}[0-9]+$/', $token)))
+    if (!(preg_match('/^(LF|TF|GF)@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)+[0-9]*(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$/', $token) || preg_match('/^string@([^\s#\\\\]|\\\\\d{3})*$$/', $token) || preg_match('/^bool@(true|false)$/', $token) || preg_match('/^nil@nil$/', $token) || preg_match('/^int@(\+|-){0,1}(([1-9][0-9]*(_[0-9]+)*)|0)$/', $token) || preg_match('/^int@(\+|-){0,1}0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*$/', $token) || preg_match('/^int@(\+|-){0,1}0[oO]?[0-7]+(_[0-7]+)*+$/', $token) ))
     {
         syntax_err();
     }
@@ -415,7 +415,6 @@ function create_XML(array $stream, int $operand_count, int $inst_number, ?string
 
             xmlwriter_end_element($xml);
             xmlwriter_end_element($xml);
-            xmlwriter_end_element($xml);
             break;
     }
 }
@@ -424,7 +423,7 @@ function create_XML(array $stream, int $operand_count, int $inst_number, ?string
 $header_flag = false;
 
 /**Overenie vstupných argumentov skriptu */
-arg_check($argc,$argv);
+arg_check($argc, $argv);
 
 /**Spracovanie inštrukcií zo štandardného vstupu */
 while ($line = fgets(STDIN))
@@ -485,7 +484,7 @@ while ($line = fgets(STDIN))
     /**Kontrola prítomnosti hlavičky - IPPcode23 */
     if ($header_flag == false)
     {
-        if ($clean[0] !== ".IPPcode23")
+        if (strtoupper($clean[0]) !== ".IPPCODE23")
         {
             head_err();
         }
