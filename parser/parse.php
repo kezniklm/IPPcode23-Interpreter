@@ -484,7 +484,7 @@ while ($line = fgets(STDIN))
     /**Kontrola prítomnosti hlavičky - IPPcode23 */
     if ($header_flag == false)
     {
-        if (strtoupper($clean[0]) !== ".IPPCODE23")
+        if (strtoupper($clean[0]) !== ".IPPCODE23" || !empty($clean[FIRST_OP]))
         {
             head_err();
         }
