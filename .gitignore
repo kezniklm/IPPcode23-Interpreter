@@ -132,10 +132,8 @@ dmypy.json
 Instruction list
 ma zle
 test.php
-tests
 jexamxml.jar
 options
-parser/example2
-IPP-project-2023-tests
-parser/xkezni01.zip
+interpret/test
+parser/tests
 parser/readme1.docx
