@@ -61,8 +61,10 @@ class Exit:
     EXIT_XML_FORMAT = 31
     EXIT_XML_STRUCTURE = 32
     EXIT_SEMANTIC = 52
+    EXIT_TYPE = 53
     EXIT_VARIABLE = 54
     EXIT_FRAME = 55
+    EXIT_VALUE = 56
 
     def __init__(self, type, help=None):
         err_message = ""
@@ -81,10 +83,15 @@ class Exit:
                 err_message = "Chybná štruktúra XML"
             case self.EXIT_SEMANTIC:
                 err_message = "Chyba pri sémantických kontrolách vstupného kódu v IPPcode23"
+            case self.EXIT_TYPE:
+                err_message = "Chyba pri typových kontrolách vstupného kódu v IPPcode23"
             case self.EXIT_VARIABLE:
                 err_message = "Chyba - prístup k neexistujúcej premennej"
             case self.EXIT_FRAME:
                 err_message = "Chyba - prístup k neexistujúcemu rámcu"
+            case self.EXIT_VALUE:
+                err_message = "Chyba -  stack"
+
             case _:
                 err_message = "Zadaný zlý chybový kód"
 
@@ -151,7 +158,7 @@ class xml():
          # TODO check xml version and encoding
 
     def arg_count(self, last_instruction):
-
+        arg_min = -1
         match last_instruction.upper():
             case "CREATEFRAME" | "PUSHFRAME" | "POPFRAME" | "RETURN" | "BREAK":
                 arg_min = 0
@@ -180,7 +187,6 @@ class xml():
         instruction_number = 0
         self.instruction_list = []
         order = 0
-        instruction_order = 0
         arg1 = ""
         arg2 = ""
         arg3 = ""
@@ -195,23 +201,34 @@ class xml():
                         if re.match(r'arg1$', temp_token.tag):
                             if "type" in temp_token.attrib and temp_token.attrib.get("type") != "":
                                 args_list.insert(0, temp_token.attrib)
-                                arg1 = re.sub(r"\s+", "", str(temp_token.text))
+                                arg1 = str(temp_token.text)
                             else:
                                 Exit(Exit.EXIT_XML_STRUCTURE)
                         elif re.match(r'arg2$', temp_token.tag):
                             if "type" in temp_token.attrib and temp_token.attrib.get("type") != "":
                                 args_list.insert(0, temp_token.attrib)
-                                arg2 = re.sub(r"\s+", "", str(temp_token.text))
+                                arg2 = str(temp_token.text)
                             else:
                                 Exit(Exit.EXIT_XML_STRUCTURE)
                         elif re.match(r'arg3$', temp_token.tag):
                             if "type" in temp_token.attrib and temp_token.attrib.get("type") != "":
                                 args_list.insert(0, temp_token.attrib)
-                                arg3 = re.sub(r"\s+", "", str(temp_token.text))
+                                arg3 = str(temp_token.text)
                             else:
                                 Exit(Exit.EXIT_XML_STRUCTURE)
             if instruction_number == 1:
+                # kontrola arg
+                arg_min = self.arg_count(instruction)
+                if arg_min == 0 and (arg1 != "" or arg2 != "" or arg3 != ""):
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                elif arg_min == 1 and (arg1 == "" or arg2 != "" or arg3 != ""):
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                elif arg_min == 2 and (arg1 == "" or arg2 == "" or arg3 != ""):
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                elif arg_min == 3 and (arg1 == "" or arg2 == "" or arg3 == ""):
+                    Exit(Exit.EXIT_XML_STRUCTURE)
                 instruction_number = 0
+                args_list.reverse()
                 new_Instruction = Instruction(
                     instruction, order, args_list, arg1, arg2, arg3)
                 self.instruction_list.append(new_Instruction)
@@ -285,12 +302,15 @@ class Instruction:
 
     def defVar(self, frame):
         frame.defVar(self)
-    
-    def pushs(self,frame,stack):
-        stack.pushs(self,frame)
-        
-        
-        
+
+    def pushs(self, frame, stack):
+        stack.pushs(self, frame)
+
+    def pops(self, frame, stack):
+        stack.pops(self, frame)
+
+    def add(self, frame):
+        Arithmetic.add(self, frame)
 
 
 class Interpret:
@@ -300,11 +320,11 @@ class Interpret:
         self.counter = 0
         self.frame = Frame()
         self.stack = Stack()
+        self.labels = []
 
     def handleInstructions(self):
         for instruction in self.Instruction_list:
-            # print(instruction.order)
-            match instruction.opcode:
+            match instruction.opcode.upper():
                 case "CREATEFRAME":
                     instruction.createFrame(self.frame)
                 case "PUSHFRAME":
@@ -318,7 +338,7 @@ class Interpret:
                 case "DEFVAR":
                     instruction.defVar(self.frame)
                 case "POPS":
-                    print()
+                    instruction.pops(self.frame, self.stack)
                 case "CALL":
                     print()
                 case "LABEL":
@@ -326,22 +346,152 @@ class Interpret:
                 case "JUMP":
                     print()
                 case "PUSHS":
-                    instruction.pushs(self.frame,self.stack)
+                    instruction.pushs(self.frame, self.stack)
                 case "WRITE":
                     print()
                 case "EXIT":
                     print()
                 case "DPRINT":
                     print()
+                case "MOVE":
+                    print()
+                case "INT2CHAR":
+                    print()
+                case "STRLEN":
+                    print()
+                case "TYPE":
+                    print()
+                case "NOT":
+                    print()
+                case "READ":
+                    print()
+                case "ADD":
+                    instruction.add(self.frame)
+                case "SUB":
+                    print()
+                case "MUL":
+                    print()
+                case "IDIV":
+                    print()
+                case "LT":
+                    print()
+                case "GT":
+                    print()
+                case "EQ":
+                    print()
+                case "AND":
+                    print()
+                case "OR":
+                    print()
+                case "STRI2INT":
+                    print()
+                case "CONCAT":
+                    print()
+                case "GETCHAR":
+                    print()
+                case "SETCHAR":
+                    print()
+                case "JUMPIFEQ":
+                    print()
+                case "JUMPIFNEQ":
+                    print()
+                case _:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+
+    def handleLabels(self):
+        for instruction in self.Instruction_list:
+            if instruction.opcode.upper() == "LABEL":
+                if instruction.arg1 not in self.labels:
+                    self.labels.append(instruction.arg1)
+                else:
+                    Exit(Exit.EXIT_SEMANTIC)
+
+
+class Arithmetic:
+    @staticmethod
+    def add(instr, frame):
+        frame.retFrame(instr)
+        for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+            if variable.name == instr.arg1:
+                frame.isDefined(instr.arg1)
+                if ((instr.args[1]["type"] == "var" and frame.isDefined(instr.arg2)) or instr.args[1]["type"] == "int") and ((instr.args[2]["type"] == "var" and frame.isDefined(instr.arg3)) or instr.args[2]["type"] == "int"):
+                    # osetrit hexa a octa
+                    arg2value = None
+                    arg3value = None
+                    if frame.isVar(instr.arg2):
+                        arg2value = frame.getValue(instr.arg2)
+                    if frame.isVar(instr.arg3):
+                        arg3value = frame.getValue(instr.arg3)
+
+                    if variable.value == None:
+                        variable.value = 0
+                        variable.type = "int"
+
+                    if arg2value == None and arg3value == None:
+                        variable.value = int(
+                            variable.value) + int(instr.arg2) + int(instr.arg3)
+                    elif arg2value != None and arg3value == None:
+                        variable.value = int(
+                            variable.value) + int(arg2value) + int(instr.arg3)
+                    elif arg2value == None and arg3value != None:
+                        variable.value = int(
+                            variable.value) + int(instr.arg2) + int(arg3value)
+                    elif arg2value != None and arg3value != None:
+                        variable.value = int(
+                            variable.value) + int(arg2value) + int(arg3value)
+
+                    variable.type = "int"
+                    oldFrame = frame.isDefined(instr.arg1)
+                    frame.frame_now[frame.isDefined(instr.arg1)].remove(variable)
+                    frame.frame_now[oldFrame].append(variable)
+                else:
+                    Exit(Exit.EXIT_TYPE)
+                    
+class IO:
+    
+    @staticmethod
+    def read(instr, frame):
+        print()
+        
+    @staticmethod
+    def write(instr, frame):
+        print()
+
 
 class Stack:
     def __init__(self):
         self.dataStack = []
-    
-    def pushs(self,instr,frame):
-        frame.isDefined(instr)
-        print ("k")
-        
+
+    def pushs(self, instr, frame):
+        if frame.isDefined(instr.arg1) == "TF" or frame.isDefined(instr.arg1) == "LF" or frame.isDefined(instr.arg1) == "GF":
+            for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+                if variable.name == instr.arg1:
+                    if variable.value == None or variable.type == None:
+                        Exit(Exit.EXIT_VALUE)
+                    self.dataStack.append(variable)
+                    frame.frame_now[frame.isDefined(
+                        instr.arg1)].remove(variable)
+                    break
+        else:
+            new_const = Constant(instr.args[0]["type"], instr.arg1)
+            self.dataStack.append(new_const)
+
+    def pops(self, instr, frame):
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        if frame.isDefined(instr.arg1) == "TF" or frame.isDefined(instr.arg1) == "LF" or frame.isDefined(instr.arg1) == "GF":
+            temp = self.dataStack.pop()
+            var = -1
+            for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+                if variable.name == instr.arg1:
+                    var = variable
+                    break
+            index = frame.frame_now[frame.isDefined(instr.arg1)].index(var)
+            frame.frame_now[frame.isDefined(
+                instr.arg1)][index].value = temp.value
+            frame.frame_now[frame.isDefined(
+                instr.arg1)][index].type = temp.type
+
 
 class Frame:
     def __init__(self):
@@ -351,14 +501,14 @@ class Frame:
         self.temp_frame = False
 
     def defVar(self, instr):
-        if re.match(r'GF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', instr.arg1):
+        if re.match(r'\s*GF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*\s*$', instr.arg1):
             self.isRedefined(instr, "GF")
             self.frame_now["GF"].append(var(instr.arg1, "GF"))
-        elif re.match(r'LF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', instr.arg1):
+        elif re.match(r'\s*LF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*\s*$', instr.arg1):
             self.isFrame("LF")
             self.isRedefined(instr, "LF")
             self.frame_now["LF"].append(var(instr.arg1, "LF"))
-        elif re.match(r'TF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', instr.arg1):
+        elif re.match(r'\s*TF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*\s*$', instr.arg1):
             self.isFrame("TF")
             self.isRedefined(instr, "TF")
             self.frame_now["TF"].append(var(instr.arg1, "TF"))
@@ -400,38 +550,74 @@ class Frame:
         elif frame == "LF" and self.local_frame == False:
             Exit(Exit.EXIT_FRAME)
 
-    #is redefined?
+    # is redefined?
     def isRedefined(self, instr, frame):
         for instruction in self.frame_now[frame]:
             if instruction.name == instr.arg1:
                 Exit(Exit.EXIT_SEMANTIC)
-                
-    def isDefined(self,instr):
-        found = False
-        for instruction in self.frame_now[str(self.whichFrame(instr))]:
-            if instruction.name == instr.arg1:
-                return True
-        if found == False:
-            Exit(Exit.EXIT_VARIABLE)
-                
-    def whichFrame(self,instr):
-        if re.search('^GF',instr.arg1):
-            return "GF"
-        elif re.search('^TF',instr.arg1):
-            return "TF"
-        elif re.search('^LF',instr.arg1):
-            return "LF"
-        else:
-            print ("Asi error")
 
-       
+    def isDefined(self, arg):
+        for instruction in self.frame_now["TF"]:
+            if instruction.name == arg:
+                if re.match(r'^TF@', arg):
+                    self.isFrame("TF")
+                    return "TF"
+
+        for instruction in self.frame_now["LF"]:
+            if instruction.name == arg:
+                if re.match(r'^LF@', arg):
+                    self.isFrame("LF")
+                    return "LF"
+
+        for instruction in self.frame_now["GF"]:
+            if instruction.name == arg:
+                return "GF"
+
+        if re.match(r'^TF@', arg):
+            self.isFrame("TF")
+        elif re.match(r'^LF@', arg):
+            self.isFrame("LF")
+
+        if not self.isVar(arg):
+            return "True"
+        Exit(Exit.EXIT_VARIABLE)
+
+    def isVar(self, arg):
+        if re.match(r'^(LF|TF|GF)@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)+[0-9]*(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$', arg):
+            return True
+        else:
+            return False
+
+    def retFrame(self, instr):
+        if self.isDefined(instr.arg1) == "TF":
+            return "TF"
+        elif self.isDefined(instr.arg1) == "LF":
+            return "LF"
+        elif self.isDefined(instr.arg1) == "GF":
+            return "GF"
+        else:
+            Exit(Exit.EXIT_VARIABLE)
+
+    def getValue(self, arg):
+        for variable in self.frame_now[str(self.isDefined(arg))]:
+            if variable.name == arg:
+                if variable.value == None:
+                    Exit(Exit.EXIT_VALUE)
+                return variable.value
 
 
 class var:
-    def __init__(self, name, frame, type=None):
+    def __init__(self, name, frame, type=None, value=None):
         self.name = name
         self.frame = frame
         self.type = type
+        self.value = value
+
+
+class Constant:
+    def __init__(self, type, value):
+        self.type = type
+        self.value = value
 
 
 class Program:
@@ -441,6 +627,7 @@ class Program:
     XML.parse()
     XML.sort()
     Interpret = Interpret(XML)
+    Interpret.handleLabels()
     Interpret.handleInstructions()
 
 
