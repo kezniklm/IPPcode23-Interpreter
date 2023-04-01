@@ -12,9 +12,6 @@ import re
 SCRIPT_NAME = 0
 MAX_ARGUMENTS = 2
 
-ZERO_ARGUMENTS = 0
-ONE_ARGUMENT = 1
-
 
 class Arguments:
     """Trieda pre spracovanie vstupných argumentov skriptu"""
@@ -22,7 +19,6 @@ class Arguments:
     def __init__(self):
         self.source = ""
         self.input = ""
-        # self.argc = 0
         args = sys.argv[SCRIPT_NAME + 1:]
         if len(args) > MAX_ARGUMENTS:
             Exit(Exit.EXIT_PARAM)
@@ -52,7 +48,7 @@ class Arguments:
 
 
 class Exit:
-    """Trieda slúžiaca na ukončenie programu"""
+    """Trieda slúžiaca na ukončenie programu podľa zadaného exit kódu"""
 
     EXIT_SUCCESS = 0
     EXIT_PARAM = 10
@@ -65,33 +61,39 @@ class Exit:
     EXIT_VARIABLE = 54
     EXIT_FRAME = 55
     EXIT_VALUE = 56
+    EXIT_OPERAND = 57
+    EXIT_STRING = 58
 
     def __init__(self, type, help=None):
         err_message = ""
         match type:
             case self.EXIT_SUCCESS:
                 if help == True:
-                    print("help string", file=sys.stdout)
+                    print(
+                        "Názov:\ninterpret.py - interpret jazyka IPPcode23 v XML reprezentácii kódu\n\nPoužitie:\n    python3 interpret.py [MOŽNOSTI]\nPopis:\n    interpret.py vykoná interpretáciu XML reprezentácie kódu zo zdrojovového súboru\nMOŽNOSTI\n    --help\n        Vypíše pomocnú hlášku pre skript interpet.py\n    --source=file\n        Vstupný súbor s XML reprezentaciou zdrojového kódu\n    --input=file\n        Súbor so vstupmi pre samotú interpretáciu zadaného zdrojového kódu", file=sys.stdout)
                 sys.exit(type)
             case self.EXIT_PARAM:
-                err_message = "Zadaná chybná kombinácia alebo chybný počet argumentov skriptu interpret.py\n"
+                err_message = "CHYBA:\nZadaná chybná kombinácia alebo chybný počet argumentov skriptu interpret.py\n"
             case self.EXIT_INPUT:
-                err_message = "Chyba pri otváraní vstupných súborov"
+                err_message = "CHYBA:\nNie je možné otvoriť vstupné súbory"
             case self.EXIT_XML_FORMAT:
-                err_message = "Chybný XML formát vo vstupnom súbore"
+                err_message = "CHYBA:\nXML nie je well-formed - chybný XML formát"
             case self.EXIT_XML_STRUCTURE:
-                err_message = "Chybná štruktúra XML"
+                err_message = "CHYBA:\nŠtruktúra XML nie je správna"
             case self.EXIT_SEMANTIC:
-                err_message = "Chyba pri sémantických kontrolách vstupného kódu v IPPcode23"
+                err_message = "CHYBA:\nPri sémantických kontrolách vstupného kódu v IPPcode23 nastala chyba"
             case self.EXIT_TYPE:
-                err_message = "Chyba pri typových kontrolách vstupného kódu v IPPcode23"
+                err_message = "CHYBA:\nPri typových kontrolách vstupného kódu v IPPcode23 nastala chyba"
             case self.EXIT_VARIABLE:
-                err_message = "Chyba - prístup k neexistujúcej premennej"
+                err_message = "CHYBA:\nPrístup k neexistujúcej premennej"
             case self.EXIT_FRAME:
-                err_message = "Chyba - prístup k neexistujúcemu rámcu"
+                err_message = "CHYBA:\nPrístup k neexistujúcemu rámcu"
             case self.EXIT_VALUE:
-                err_message = "Chyba -  stack"
-
+                err_message = "CHYBA:\nChýbajúca hodnota napr. v premennej,zasobniku volani alebo na zasobniku"
+            case self.EXIT_OPERAND:
+                err_message = "CHYBA:\nChybná hodnota operandu"
+            case self.EXIT_STRING:
+                err_message = "CHYBA:\nChybná práca s reťazcom"
             case _:
                 err_message = "Zadaný zlý chybový kód"
 
@@ -100,7 +102,7 @@ class Exit:
 
 
 class xml():
-    """XML comment"""
+    """Trieda, ktorá spracuje zadaný vstupný súbor s xml reprezentáciou kódu"""
 
     def __init__(self, args):
         if args.Source():
@@ -182,6 +184,7 @@ class xml():
         return arg_min
 
     def parse(self):
+        """Spracuje jednotlivé inštrukcie z XML reprezentácie do jednotlivých inštancií triedy Instruction"""
         instruction = ""
         args_list = []
         instruction_number = 0
@@ -239,7 +242,7 @@ class xml():
                 arg3 = ""
 
     def sort(self):
-        """Sort"""
+        """Usporiada inštukcie do správneho poradia"""
         self.instruction_list = sorted(
             self.instruction_list, key=lambda x: int(x.order))
 
@@ -312,6 +315,9 @@ class Instruction:
     def add(self, frame):
         Arithmetic.add(self, frame)
 
+    def writeI(self, frame):
+        IO.writeI(self, frame)
+
 
 class Interpret:
 
@@ -332,69 +338,69 @@ class Interpret:
                 case "POPFRAME":
                     instruction.popFrame(self.frame)
                 case "RETURN":
-                    print()
+                    pass
                 case "BREAK":
-                    print()
+                    pass
                 case "DEFVAR":
                     instruction.defVar(self.frame)
                 case "POPS":
                     instruction.pops(self.frame, self.stack)
                 case "CALL":
-                    print()
+                    pass
                 case "LABEL":
-                    print()
+                    pass
                 case "JUMP":
-                    print()
+                    pass
                 case "PUSHS":
                     instruction.pushs(self.frame, self.stack)
                 case "WRITE":
-                    print()
+                    instruction.writeI(self.frame)
                 case "EXIT":
-                    print()
+                    pass
                 case "DPRINT":
-                    print()
+                    pass
                 case "MOVE":
-                    print()
+                    pass
                 case "INT2CHAR":
-                    print()
+                    pass
                 case "STRLEN":
-                    print()
+                    pass
                 case "TYPE":
-                    print()
+                    pass
                 case "NOT":
-                    print()
+                   pass
                 case "READ":
-                    print()
+                   pass
                 case "ADD":
                     instruction.add(self.frame)
                 case "SUB":
-                    print()
+                    pass
                 case "MUL":
-                    print()
+                    pass
                 case "IDIV":
-                    print()
+                    pass
                 case "LT":
-                    print()
+                    pass
                 case "GT":
-                    print()
+                    pass
                 case "EQ":
-                    print()
+                    pass
                 case "AND":
-                    print()
+                    pass
                 case "OR":
-                    print()
+                    pass
                 case "STRI2INT":
-                    print()
+                    pass
                 case "CONCAT":
-                    print()
+                    pass
                 case "GETCHAR":
-                    print()
+                    pass
                 case "SETCHAR":
-                    print()
+                    pass
                 case "JUMPIFEQ":
-                    print()
+                    pass
                 case "JUMPIFNEQ":
-                    print()
+                    pass
                 case _:
                     Exit(Exit.EXIT_XML_STRUCTURE)
 
@@ -442,20 +448,37 @@ class Arithmetic:
 
                     variable.type = "int"
                     oldFrame = frame.isDefined(instr.arg1)
-                    frame.frame_now[frame.isDefined(instr.arg1)].remove(variable)
+                    frame.frame_now[frame.isDefined(
+                        instr.arg1)].remove(variable)
                     frame.frame_now[oldFrame].append(variable)
                 else:
                     Exit(Exit.EXIT_TYPE)
-                    
+
+
 class IO:
-    
+
     @staticmethod
     def read(instr, frame):
-        print()
-        
+        pass
+
     @staticmethod
-    def write(instr, frame):
-        print()
+    def writeI(instr, frame):
+        if instr.args[0]["type"] == "bool":
+            print(instr.arg1,end='')
+        elif instr.args[0]["type"] == "nil":
+            print("",end='')
+        elif instr.args[0]["type"] == "var":
+            if not frame.isVar(instr.args[0]["type"]):
+                print(instr.args[0]["type"])
+        elif instr.args[0]["type"] == "string":
+            print(IO.handleString(instr.arg1),end='') 
+        else:
+            print(instr.arg1,end='') 
+    @staticmethod
+    def handleString(value):
+        value = value.replace('\\032', ' ')
+        value = re.sub(r'\\(\d{3})|\\032', lambda m: chr(int(m.group(1), 8)),value)#asi good
+        return value
 
 
 class Stack:
