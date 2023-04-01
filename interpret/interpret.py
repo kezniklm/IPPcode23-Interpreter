@@ -315,6 +315,24 @@ class Instruction:
     def add(self, frame):
         Arithmetic.add(self, frame)
 
+    def sub(self, frame):
+        Arithmetic.sub(self, frame)
+
+    def mul(self, frame):
+        Arithmetic.mul(self, frame)
+
+    def idiv(self, frame):
+        Arithmetic.idiv(self, frame)
+        
+    def lt(self, frame):
+        Relational.lt(self, frame)
+        
+    def gt(self, frame):
+        Relational.gt(self, frame)
+        
+    def eq(self, frame):
+        Relational.eq(self, frame)
+        
     def writeI(self, frame):
         IO.writeI(self, frame)
 
@@ -368,23 +386,23 @@ class Interpret:
                 case "TYPE":
                     pass
                 case "NOT":
-                   pass
+                    pass
                 case "READ":
-                   pass
+                    pass
                 case "ADD":
                     instruction.add(self.frame)
                 case "SUB":
-                    pass
+                    instruction.sub(self.frame)
                 case "MUL":
-                    pass
+                    instruction.mul(self.frame)
                 case "IDIV":
-                    pass
+                    instruction.idiv(self.frame)
                 case "LT":
-                    pass
+                    instruction.lt(self.frame)
                 case "GT":
-                    pass
+                    instruction.gt(self.frame)
                 case "EQ":
-                    pass
+                    instruction.eq(self.frame)
                 case "AND":
                     pass
                 case "OR":
@@ -414,45 +432,213 @@ class Interpret:
 
 
 class Arithmetic:
+
     @staticmethod
-    def add(instr, frame):
+    def base(instr, frame, operation):
         frame.retFrame(instr)
         for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
             if variable.name == instr.arg1:
                 frame.isDefined(instr.arg1)
+                #variable type check
                 if ((instr.args[1]["type"] == "var" and frame.isDefined(instr.arg2)) or instr.args[1]["type"] == "int") and ((instr.args[2]["type"] == "var" and frame.isDefined(instr.arg3)) or instr.args[2]["type"] == "int"):
-                    # osetrit hexa a octa
-                    arg2value = None
-                    arg3value = None
-                    if frame.isVar(instr.arg2):
-                        arg2value = frame.getValue(instr.arg2)
-                    if frame.isVar(instr.arg3):
-                        arg3value = frame.getValue(instr.arg3)
-
-                    if variable.value == None:
-                        variable.value = 0
-                        variable.type = "int"
-
-                    if arg2value == None and arg3value == None:
-                        variable.value = int(
-                            variable.value) + int(instr.arg2) + int(instr.arg3)
-                    elif arg2value != None and arg3value == None:
-                        variable.value = int(
-                            variable.value) + int(arg2value) + int(instr.arg3)
-                    elif arg2value == None and arg3value != None:
-                        variable.value = int(
-                            variable.value) + int(instr.arg2) + int(arg3value)
-                    elif arg2value != None and arg3value != None:
-                        variable.value = int(
-                            variable.value) + int(arg2value) + int(arg3value)
-
-                    variable.type = "int"
                     oldFrame = frame.isDefined(instr.arg1)
+                    arg2value = Arithmetic.getValue(frame, instr.arg2)
+                    arg3value = Arithmetic.getValue(frame, instr.arg3)
+                    try:
+                        match operation:
+                            case "add":
+                                variable.value = arg2value + arg3value
+                            case "sub":
+                                variable.value = arg2value - arg3value
+                            case "mul":
+                                variable.value = arg2value * arg3value
+                            case "idiv":
+                                if arg3value != 0:
+                                    variable.value = arg2value // arg3value
+                                else:
+                                    Exit(Exit.EXIT_OPERAND)
+                    except SystemExit:
+                        pass
+                    except:
+                        Exit(Exit.EXIT_XML_STRUCTURE)
+                    variable = Arithmetic.setNone(variable,"int")
+                    variable.type = "int"
                     frame.frame_now[frame.isDefined(
                         instr.arg1)].remove(variable)
                     frame.frame_now[oldFrame].append(variable)
                 else:
                     Exit(Exit.EXIT_TYPE)
+
+    @staticmethod
+    def add(instr, frame):
+        Arithmetic.base(instr, frame, operation="add")
+
+    @staticmethod
+    def sub(instr, frame):
+        Arithmetic.base(instr, frame, operation="sub")
+
+    @staticmethod
+    def mul(instr, frame):
+        Arithmetic.base(instr, frame, operation="mul")
+
+    @staticmethod
+    def idiv(instr, frame):
+        Arithmetic.base(instr, frame, operation="idiv")
+
+    @staticmethod
+    def hexToDec(number):
+        try:
+            number = int(number, 16)
+        except:
+            return number
+        return number
+
+    @staticmethod
+    def octaToDec(number):
+        try:
+            number = int(number, 8)
+        except:
+            return number
+        return number
+
+    @staticmethod
+    def stringToInt(number):
+        try:
+            number = int(number)
+        except:
+            return number
+        return number
+
+    @staticmethod
+    def isNone(number):
+        if number == None:
+            Exit(Exit.EXIT_VALUE)
+
+    @staticmethod
+    def setNone(variable,type):
+        if variable.value == None:
+            variable.value = 0
+            variable.type = type
+        return variable
+
+    @staticmethod
+    def getValue(frame, instruction_argument):
+        # + regex pre +-
+        number = None
+        if frame.isVar(instruction_argument):
+            number = frame.getValueFromVar(instruction_argument)
+            if type(number) != int:
+                Exit(Exit.EXIT_TYPE)
+            # valueFromVar = frame.getValueFromVar(instruction_argument)
+            # if re.match(r'0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*', valueFromVar):
+            #     number = Arithmetic.hexToDec(valueFromVar)
+            # elif re.match(r'0[oO]?[0-7]+(_[0-7]+)*', valueFromVar):
+            #     number = Arithmetic.octaToDec(valueFromVar)
+            # else:
+            #     number = Arithmetic.stringToInt(valueFromVar)
+        elif re.match(r'0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*', instruction_argument):
+            number = Arithmetic.hexToDec(instruction_argument)
+        elif re.match(r'0[oO]?[0-7]+(_[0-7]+)*', instruction_argument):
+            number = Arithmetic.octaToDec(instruction_argument)
+        else:
+            number = Arithmetic.stringToInt(instruction_argument)
+        return number
+
+
+class Relational:
+    @staticmethod
+    def base(instr, frame, operation):
+        frame.retFrame(instr)
+        for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+            if variable.name == instr.arg1:
+                oldFrame = frame.isDefined(instr.arg1)
+                arg2value = None
+                arg3value = None
+                arg2var = None
+                arg3var = None
+                #BAD RETURN CODE
+                if frame.isVar(instr.arg2):       
+                    arg2var = frame.getVar(instr.arg2)
+                if frame.isVar(instr.arg3): 
+                    arg3var = frame.getVar(instr.arg3)
+                    #getvalue nil
+                if (instr.args[1]["type"] == "nil" or instr.args[2]["type"] == "nil") and operation != "eq":
+                    Exit(Exit.EXIT_TYPE) 
+                if (instr.args[1]["type"] == instr.args[2]["type"] and instr.args[1]["type"] != "var"):
+                    match instr.args[1]["type"]:
+                        case "int":
+                            arg2value = Arithmetic.getValue(frame, instr.arg2)
+                            arg3value = Arithmetic.getValue(frame, instr.arg3)
+                        case "string":
+                            arg2value = instr.arg2
+                            arg3value = instr.arg3
+                        case "bool":
+                            arg2value = instr.arg2
+                            arg3value = instr.arg3                  
+                elif(arg2var != None and arg2var.type == instr.args[2]["type"]):
+                    match arg2var.type:
+                        case "int":
+                            arg2value = arg2var.value
+                            arg3value = Arithmetic.getValue(frame, instr.arg3)
+                        case "string":
+                            arg2value = arg2var.value
+                            arg3value = instr.arg3
+                        case "bool":
+                            arg2value = arg2var.value
+                            arg3value = instr.arg3         
+                elif(arg3var != None and arg3var.type == instr.args[1]["type"]):
+                     match arg3var.type:
+                        case "int":
+                            arg2value = Arithmetic.getValue(frame, instr.arg2)
+                            arg3value = arg3var.value
+                        case "string":
+                            arg2value = instr.arg2
+                            arg3value = arg3var.value
+                        #need to test bool
+                        case "bool":
+                            arg2value = instr.arg2
+                            arg3value = arg3var.value   
+                else:
+                    Exit(Exit.EXIT_VALUE)
+                if arg2value != None and arg3value != None:
+                    match operation:
+                        case "gt":
+                            variable.value = arg2value > arg3value
+                        case "lt":
+                            variable.value = arg2value < arg3value
+                        case "eq":
+                            variable.value = arg2value == arg3value
+                else:
+                    Exit(Exit.EXIT_TYPE)
+                variable = Arithmetic.setNone(variable,"bool")
+                variable.type = "bool"
+                if variable.value == True:
+                    variable.value = "true"
+                elif variable.value == False:
+                    variable.value = "false"
+                frame.frame_now[frame.isDefined(
+                    instr.arg1)].remove(variable)
+                frame.frame_now[oldFrame].append(variable)
+                    
+    @staticmethod               
+    def gt(instr, frame):
+        Relational.base(instr,frame,"gt")
+    
+    @staticmethod               
+    def lt(instr, frame):
+        Relational.base(instr,frame,"lt")
+    
+    @staticmethod               
+    def eq(instr, frame):
+        Relational.base(instr,frame,"eq")
+    
+                
+                    
+                    
+                
+                    
+                
+             
 
 
 class IO:
@@ -464,20 +650,30 @@ class IO:
     @staticmethod
     def writeI(instr, frame):
         if instr.args[0]["type"] == "bool":
-            print(instr.arg1,end='')
+            print(instr.arg1, end='')
         elif instr.args[0]["type"] == "nil":
-            print("",end='')
+            print("", end='')
         elif instr.args[0]["type"] == "var":
-            if not frame.isVar(instr.args[0]["type"]):
-                print(instr.args[0]["type"])
+            if frame.isVar(instr.arg1):
+                for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+                    if variable.name == instr.arg1:
+                        if variable.value != None:
+                            print(variable.value, end='')  # zatial takto
+                        else:
+                            Exit(Exit.EXIT_VALUE)
         elif instr.args[0]["type"] == "string":
-            print(IO.handleString(instr.arg1),end='') 
+            print(IO.handleString(instr.arg1), end='')
         else:
-            print(instr.arg1,end='') 
+            if instr.arg1 != None:
+                print(instr.arg1, end='')
+            else:
+                Exit(Exit.EXIT_VALUE)
+
     @staticmethod
     def handleString(value):
         value = value.replace('\\032', ' ')
-        value = re.sub(r'\\(\d{3})|\\032', lambda m: chr(int(m.group(1), 8)),value)#asi good
+        value = re.sub(r'\\(\d{3})|\\032', lambda m: chr(
+            int(m.group(1), 8)), value)  # asi good
         return value
 
 
@@ -621,12 +817,20 @@ class Frame:
         else:
             Exit(Exit.EXIT_VARIABLE)
 
-    def getValue(self, arg):
+    def getValueFromVar(self, arg):
         for variable in self.frame_now[str(self.isDefined(arg))]:
             if variable.name == arg:
                 if variable.value == None:
                     Exit(Exit.EXIT_VALUE)
                 return variable.value
+    
+    def getVar(self, arg):
+        for variable in self.frame_now[str(self.isDefined(arg))]:
+            if variable.name == arg:
+                if variable.value == None:
+                    Exit(Exit.EXIT_VALUE)
+                return variable
+        return None
 
 
 class var:
