@@ -36,7 +36,10 @@ class Arguments:
                     self.source = file
                 case ['--input', file]:
                     # self.argc += 1
-                    self.input = file
+                    try:
+                        self.input = open(file, "r")
+                    except:
+                        Exit(Exit.EXIT_INPUT)
                 case _:
                     Exit(Exit.EXIT_PARAM)
 
@@ -103,6 +106,7 @@ class xml():
     """Trieda, ktorá spracuje zadaný vstupný súbor s xml reprezentáciou kódu"""
 
     def __init__(self, args):
+        self.args = args
         if args.Source():
             try:
                 self.tree = ET.parse(args.Source())
@@ -240,9 +244,11 @@ class xml():
 
     def sort(self):
         """Usporiada inštukcie do správneho poradia"""
-        self.instruction_list = sorted(
-            self.instruction_list, key=lambda x: int(x.order))
-
+        self.instruction_list = sorted(self.instruction_list, key=lambda x: int(x.order))
+        index = 0
+        for instruction in self.instruction_list:
+            instruction.order = index
+            index += 1
 
 class Instruction:
     list = {
@@ -348,6 +354,9 @@ class Instruction:
     def writeI(self, frame):
         IO.writeI(self, frame, output_stream=sys.stdout)
 
+    def read(self, frame, xml):
+        IO.read(self, frame, xml)
+
     def exit(self, frame):
         IO.exit(self, frame)
 
@@ -371,11 +380,34 @@ class Instruction:
 
     def setchar(self, frame):
         String.setchar(self, frame)
+        
+    def breakI(self,frame):
+        IO.breakI(self, frame)
+        
+    def call(self,frame):
+        programFlow.call(self, frame)
+        
+    def label(self,frame):
+        programFlow.label(self, frame)
+            
+    def jump(self,frame,interpret):
+        programFlow.jump(self, frame, interpret)
+        
+    def jumpifeq(self,frame):
+        programFlow.jumpifeq(self, frame)
+        
+    def jumpifneq(self,frame):
+        programFlow.jumpifneq(self, frame)
+    
+    
+    
+    
 
 
 class Interpret:
 
     def __init__(self, xml):
+        self.xml = xml
         self.Instruction_list = xml.instruction_list
         self.counter = 0
         self.frame = Frame()
@@ -383,7 +415,10 @@ class Interpret:
         self.labels = []
 
     def handleInstructions(self):
-        for instruction in self.Instruction_list:
+        program_counter = 0
+        while (program_counter < len(self.Instruction_list)):
+            instruction = self.Instruction_list[program_counter]
+            #print(instruction.opcode)
             match instruction.opcode.upper():
                 case "CREATEFRAME":
                     instruction.createFrame(self.frame)
@@ -392,19 +427,19 @@ class Interpret:
                 case "POPFRAME":
                     instruction.popFrame(self.frame)
                 case "RETURN":
-                    pass
+                    instruction.returnI(self.frame)
                 case "BREAK":
-                    pass
+                    instruction.breakI(self.frame)
                 case "DEFVAR":
                     instruction.defVar(self.frame)
                 case "POPS":
                     instruction.pops(self.frame, self.stack)
                 case "CALL":
-                    pass
+                    instruction.call(self.frame)
                 case "LABEL":
-                    pass
+                    instruction.label(self.frame,self)
                 case "JUMP":
-                    pass
+                    instruction.jump(self.frame,self)
                 case "PUSHS":
                     instruction.pushs(self.frame, self.stack)
                 case "WRITE":
@@ -424,7 +459,7 @@ class Interpret:
                 case "NOT":
                     instruction.notI(self.frame)
                 case "READ":
-                    pass
+                    instruction.read(self.frame, self.xml)
                 case "ADD":
                     instruction.add(self.frame)
                 case "SUB":
@@ -452,11 +487,12 @@ class Interpret:
                 case "SETCHAR":
                     instruction.setchar(self.frame)
                 case "JUMPIFEQ":
-                    pass
+                    instruction.jumpifeq(self.frame)
                 case "JUMPIFNEQ":
-                    pass
+                    instruction.jumpifneq(self.frame)
                 case _:
                     Exit(Exit.EXIT_XML_STRUCTURE)
+            program_counter += 1
 
     def handleLabels(self):
         for instruction in self.Instruction_list:
@@ -561,19 +597,21 @@ class Arithmetic:
         return variable
 
     @staticmethod
-    def getIntValue(frame, instruction_argument):
+    def getIntValue(frame, instruction_argument, readFlag=None):
         number = None
-        if frame.isVar(instruction_argument):
+        if instruction_argument != None and frame.isVar(instruction_argument) and readFlag == None:
             number = frame.getValueFromVar(instruction_argument)
             if type(number) != int:
                 Exit(Exit.EXIT_TYPE)
-        elif re.match(r'^(\+|\-){0,1}0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*$', instruction_argument):
+        elif instruction_argument != None and re.match(r'^(\+|\-){0,1}0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*$', instruction_argument):
             number = Arithmetic.hexToDec(instruction_argument)
-        elif re.match(r'^(\+|\-){0,1}0[oO]?[0-7]+(_[0-7]+)*$', instruction_argument):
+        elif instruction_argument != None and re.match(r'^(\+|\-){0,1}0[oO]?[0-7]+(_[0-7]+)*$', instruction_argument):
             number = Arithmetic.octaToDec(instruction_argument)
-        elif re.match(r'^(\+|\-){0,1}(([1-9][0-9]*(_[0-9]+)*)|0)$', instruction_argument):
+        elif instruction_argument != None and re.match(r'^(\+|\-){0,1}(([1-9][0-9]*(_[0-9]+)*)|0)$', instruction_argument):
             number = Arithmetic.stringToInt(instruction_argument)
         else:
+            if readFlag == True:
+                return None
             Exit(Exit.EXIT_XML_STRUCTURE)
         return number
 
@@ -827,7 +865,7 @@ class String:
                         arg2value = instr.arg2
                     arg2value = IO.handleString(arg2value)
                     arg3value = Arithmetic.getIntValue(frame, instr.arg3)
-                    if (arg3value != None and arg2value != None ) and not (0 <= arg3value < len(arg2value)):
+                    if (arg3value != None and arg2value != None) and not (0 <= arg3value < len(arg2value)):
                         Exit(Exit.EXIT_STRING)
                     if arg3value != None and arg2value != None:
                         variable.value = ord(arg2value[arg3value])
@@ -863,8 +901,7 @@ class String:
                         arg3value = IO.handleString(arg3var.value)
                     else:
                         arg3value = IO.handleString(instr.arg3)
-                        
-                        
+
                     if arg2value == 'None':
                         arg2value = ""
                     if arg3value == 'None':
@@ -876,6 +913,8 @@ class String:
                     frame.frame_now[oldFrame].append(variable)
                 else:
                     Exit(Exit.EXIT_TYPE)
+                break
+            
 
     @staticmethod
     def strlen(instr, frame):
@@ -893,16 +932,16 @@ class String:
                         arg2value = IO.handleString(arg2var.value)
                     else:
                         arg2value = IO.handleString(instr.arg2)
-                        
+
                         if arg2value == 'None':
                             arg2value = ""
                         variable.value = len(arg2value)
                         variable.type = "int"
-                        frame.frame_now[frame.isDefined(instr.arg1)].remove(variable)
+                        frame.frame_now[frame.isDefined(
+                            instr.arg1)].remove(variable)
                         frame.frame_now[oldFrame].append(variable)
                 else:
                     Exit(Exit.EXIT_TYPE)
-                        
 
     @staticmethod
     def getchar(instr, frame):
@@ -910,17 +949,169 @@ class String:
         for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
             if variable.name == instr.arg1:
                 oldFrame = frame.isDefined(instr.arg1)
+                arg2var = None
+                arg3var = None
+                if frame.isVar(instr.arg2):
+                    arg2var = frame.getVar(instr.arg2)
+                    if arg2var.type != "string":
+                        Exit(Exit.EXIT_TYPE)
+                if frame.isVar(instr.arg3):
+                    arg3var = frame.getVar(instr.arg3)
+                    if arg3var.type != "int":
+                        Exit(Exit.EXIT_TYPE)
+                if instr.args[1]["type"] in ["var", "string"] and instr.args[2]["type"] in ["var", "int"]:
+                    if arg2var != None:
+                        arg2value = arg2var.value
+                    else:
+                        arg2value = instr.arg2
+                    arg2value = IO.handleString(arg2value)
+                    arg3value = Arithmetic.getIntValue(frame, instr.arg3)
+                    if (arg3value != None and arg2value != None) and not (0 <= arg3value < len(arg2value)):
+                        Exit(Exit.EXIT_STRING)
+                    if arg3value != None and arg2value != None:
+                        variable.value = arg2value[arg3value]
+                        variable.type = "string"
+                    frame.frame_now[frame.isDefined(
+                        instr.arg1)].remove(variable)
+                    frame.frame_now[oldFrame].append(variable)
+                else:
+                    Exit(Exit.EXIT_TYPE)
 
     @staticmethod
     def setchar(instr, frame):
+        for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+            if variable.name == instr.arg1:
+                if variable.type == None or variable.value == None:
+                    Exit(Exit.EXIT_VALUE)
+                if variable.type != "string":
+                    Exit(Exit.EXIT_TYPE)
+                oldFrame = frame.isDefined(instr.arg1)
+                arg2var = None
+                arg3var = None
+                if frame.isVar(instr.arg2):
+                    arg2var = frame.getVar(instr.arg2)
+                    if arg2var.type != "int":
+                        Exit(Exit.EXIT_TYPE)
+                if frame.isVar(instr.arg3):
+                    arg3var = frame.getVar(instr.arg3)
+                    if arg3var.type != "string":
+                        Exit(Exit.EXIT_TYPE)
+                if instr.args[1]["type"] in ["var", "int"] and instr.args[2]["type"] in ["var", "string"]:
+
+                    if arg3var != None:
+                        arg3value = arg3var.value
+                    else:
+                        arg3value = instr.arg3
+                    arg2value = Arithmetic.getIntValue(frame, instr.arg2)
+                    arg3value = IO.handleString(arg3value)
+                    if (arg3value != None and arg2value != None) and not (0 <= arg2value < len(variable.value)):
+                        Exit(Exit.EXIT_STRING)
+                    if arg3value != 'None' and arg2value != None:
+                        variable.value = variable.value[:arg2value] + \
+                            arg3value[0] + variable.value[arg2value+1:]
+                        variable.type = "string"
+                    else:
+                        Exit(Exit.EXIT_STRING)
+                    frame.frame_now[frame.isDefined(
+                        instr.arg1)].remove(variable)
+                    frame.frame_now[oldFrame].append(variable)
+                else:
+                    Exit(Exit.EXIT_TYPE)
+
+
+class programFlow():
+    
+    @staticmethod
+    def jump(instr, frame, interpret):
+        print()
+    
+    @staticmethod
+    def call(instr, frame):
         pass
-
-
-class IO:
+    
+    @staticmethod
+    def label(instr, frame):
+        pass
 
     @staticmethod
-    def read(instr, frame):
+    def jumpifeq(instr, frame):
         pass
+    
+    @staticmethod
+    def jumpifneq(instr, frame):
+        pass
+       
+
+class IO():
+
+    @staticmethod
+    # overit spracovanie argumentov - iba jeden input alebo source mozu byt prazdny
+    def read(instr, frame, xml):
+        frame.retFrame(instr)
+        for variable in frame.frame_now[frame.isDefined(instr.arg1)]:
+            if variable.name == instr.arg1:
+                oldFrame = frame.isDefined(instr.arg1)
+                if instr.arg2 == "int":
+                    if xml.args.input == "":
+                        try:
+                            user_input = input()
+                        except:
+                            user_input = None
+                        variable.value = Arithmetic.getIntValue(
+                            frame, user_input, readFlag=True)
+                    else:
+                        try:
+                            user_input = xml.args.input.readline().replace('\n', "")
+                        except:
+                            user_input = None
+                        variable.value = Arithmetic.getIntValue(
+                            frame, user_input, readFlag=True)
+                    variable.type = "int"
+                    if variable.value == None:
+                        variable.type = "nil"
+                        variable.value = "nil"
+                elif instr.arg2 == "bool":
+                    if xml.args.input == "":
+                        try:
+                            user_input = input()
+                        except:
+                            user_input = None
+                    else:
+                        try:
+                            user_input = xml.args.input.readline().replace('\n', "")
+                        except:
+                            user_input = None
+                    variable.type = "bool"
+                    if user_input == None:
+                        variable.type = "nil"
+                        variable.value = "nil"
+                    elif user_input.upper() == "TRUE":
+                        variable.value = "true"
+                    else:
+                        variable.value = "false"
+                elif instr.arg2 == "string":
+                    if xml.args.input == "":
+                        try:
+                            user_input = input()
+                        except:
+                            user_input = None
+                    else:
+                        try:
+                            user_input = xml.args.input.readline().replace('\n', "")
+                        except:
+                            user_input = None
+
+                    if user_input != None:
+                        variable.value = IO.handleString(user_input)
+                        variable.type = "string"
+                    else:
+                        variable.type = "nil"
+                        variable.value = "nil"
+                else:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                frame.frame_now[frame.isDefined(instr.arg1)].remove(variable)
+                frame.frame_now[oldFrame].append(variable)
+                break
 
     @staticmethod
     def writeI(instr, frame, output_stream):
@@ -939,7 +1130,7 @@ class IO:
                             else:
                                 print(variable.value, end='',
                                       file=output_stream)  # zatial takto
-                        elif variable.value != None and variable.type != "nil":
+                        elif variable.value != None and variable.type == "nil":
                             print("", end='', file=output_stream)
                         else:
                             Exit(Exit.EXIT_VALUE)
@@ -966,18 +1157,37 @@ class IO:
     @staticmethod
     def dprint(instr, frame):
         IO.writeI(instr, frame, output_stream=sys.stderr)
-
+        
+    @staticmethod  
+    def breakI(instr, frame):
+        print(f"\nOpcode: {instr.opcode}\nOrder: {instr.order}\nObsah rámcov:",file=sys.stderr)
+        if frame.frame_now["GF"]:
+            print("Global frame:",file=sys.stderr)
+            frame.print("GF")
+        elif frame.frame_now["LF"]:
+            print("Local frame:",file=sys.stderr)
+            frame.print("LF")
+        elif frame.frame_now["TF"]:
+            print("Temporary frame:",file=sys.stderr)
+            frame.print("TF")
+            
+            
     @staticmethod
     def handleString(value):
         try:
-            value = value.replace('\\032', ' ')
-            value = re.sub('&lt;', '<', value)
-            value = re.sub('&gt;', '>', value)
-            value = re.sub('&amp;', '&', value)
-            value = re.sub('&quot;', '"', value)
-            value = re.sub('&apos;', '\'', value)
-            value = re.sub(r'\\(\d{3})|\\032', lambda m: chr(
-                int(m.group(1), 8)), value)  # asi good
+            # value = value.replace('\\032', ' ')
+            value = re.sub(r'&lt;', '<', value)
+            value = re.sub(r'&gt;', '>', value)
+            value = re.sub(r'&amp;', '&', value)
+            value = re.sub(r'&quot;', '"', value)
+            value = re.sub(r'&apos;', '\'', value)
+            while re.search(r'\\\d{3}', value):
+                sub = re.search(r'\\\d{3}', value)
+                if sub != None:
+                    value = re.sub(r'\\\d{3}', chr(
+                        int(sub[0][1:])), value, count=1)
+                else:
+                    raise SystemExit
         except:
             return value
         return value
@@ -1024,6 +1234,10 @@ class Frame:
         self.frameStack = []
         self.local_frame = False
         self.temp_frame = False
+    
+    def print(self, toPrint):
+        for variable in self.frame_now[toPrint]:
+            print(variable.name,file=sys.stderr)
 
     def move(self, instr):
         self.retFrame(instr)
