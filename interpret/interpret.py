@@ -9,18 +9,18 @@ import xml.etree.ElementTree as ET
 import sys
 import re
 
-SCRIPT_NAME = 0
-MAX_ARGUMENTS = 2
-
 
 class Arguments:
     """Trieda pre spracovanie vstupných argumentov skriptu"""
 
+    SCRIPT_NAME = 0
+    MAX_ARGUMENTS = 2
+
     def __init__(self):
         self.source = ""
         self.input = ""
-        args = sys.argv[SCRIPT_NAME + 1:]
-        if len(args) > MAX_ARGUMENTS:
+        args = sys.argv[Arguments.SCRIPT_NAME + 1:]
+        if len(args) > Arguments.MAX_ARGUMENTS:
             Exit(Exit.EXIT_PARAM)
 
         for argument in args:
@@ -35,13 +35,14 @@ class Arguments:
                         Exit(Exit.EXIT_INPUT)
                     self.source = file
                 case ['--input', file]:
-                    # self.argc += 1
                     try:
                         self.input = open(file, "r")
                     except:
                         Exit(Exit.EXIT_INPUT)
                 case _:
                     Exit(Exit.EXIT_PARAM)
+        if self.source == "" and self.input == "":
+            Exit(Exit.EXIT_PARAM)
 
     def Source(self):
         return self.source
@@ -103,9 +104,15 @@ class Exit:
 
 
 class xml():
-    """Trieda, ktorá spracuje zadaný vstupný súbor s xml reprezentáciou kódu"""
+    """Spracuje,skontroluje a rozparsuje zadaný vstupný súbor s XML reprezentáciou kódu"""
 
     def __init__(self, args):
+        """Pomocou knižnice xml.etree.ElementTree spracuje vstupný XML súbor
+
+        Args:
+            args (_type_): Spracované argumenty
+        """
+
         self.args = args
         if args.Source():
             try:
@@ -125,6 +132,7 @@ class xml():
             Exit(Exit.EXIT_XML_FORMAT)
 
     def check(self):
+        """Skontroluje spracovanú XML reprezentáciu kódu"""
 
         arg_num = 0
         program_check = False
@@ -142,8 +150,11 @@ class xml():
             if re.match(r'arg[1-3]$', child.tag):
                 arg_num += 1
             elif child.tag == "instruction":
-
-                if "order" not in child.attrib or not re.match(r'^[1-9][0-9]*$', child.attrib['order']) or "opcode" not in child.attrib or child.attrib['opcode'].upper() not in Instruction.list:
+                if 'opcode' in child.attrib:
+                    self.arg_count(child.attrib['opcode'].upper())
+                else:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                if "order" not in child.attrib or not re.match(r'^[1-9][0-9]*$', child.attrib['order']) or "opcode" not in child.attrib:
                     Exit(Exit.EXIT_XML_STRUCTURE)
                 else:
                     order_list.append(child.attrib['order'])
@@ -159,11 +170,17 @@ class xml():
         if (len(order_list) != len(set(order_list))):
             Exit(Exit.EXIT_XML_STRUCTURE)
 
-         # TODO check xml version and encoding
+    def arg_count(self, instruction):
+        """Vráti a skontroluje počet argumentov zadanej inštrukcie
 
-    def arg_count(self, last_instruction):
+        Args:
+            instruction (_type_): Inštrukcia, ktorej počet má byť skontrolovaný
+
+        Returns:
+            _type_: Počet argumentov
+        """
         arg_min = -1
-        match last_instruction.upper():
+        match instruction.upper():
             case "CREATEFRAME" | "PUSHFRAME" | "POPFRAME" | "RETURN" | "BREAK":
                 arg_min = 0
             case "POPS" | "DEFVAR":
@@ -181,7 +198,6 @@ class xml():
             case "JUMPIFEQ" | "JUMPIFNEQ":
                 arg_min = 3
             case _:
-
                 Exit(Exit.EXIT_XML_STRUCTURE)
         return arg_min
 
@@ -226,10 +242,10 @@ class xml():
                 arg_min = self.arg_count(instruction)
                 if arg_min == 0 and (arg1 != "" or arg2 != "" or arg3 != ""):
                     Exit(Exit.EXIT_XML_STRUCTURE)
-                elif arg_min == 1 and (arg2 != "" or arg3 != "" or (arg1 == "" and args_list[0]["type"] != "string")): 
-                        Exit(Exit.EXIT_XML_STRUCTURE)
+                elif arg_min == 1 and (arg2 != "" or arg3 != "" or (arg1 == "" and args_list[0]["type"] != "string")):
+                    Exit(Exit.EXIT_XML_STRUCTURE)
                 elif arg_min == 2 and (arg1 == "" or arg3 != "" or (arg2 == "" and args_list[1]["type"] != "string")):
-                    Exit(Exit.EXIT_XML_STRUCTURE)       
+                    Exit(Exit.EXIT_XML_STRUCTURE)
                 elif arg_min == 3 and (arg1 == "" or (arg2 == "" and args_list[1]["type"] != "string") or (arg3 == "" and args_list[2]["type"] != "string")):
                     Exit(Exit.EXIT_XML_STRUCTURE)
                 instruction_number = 0
@@ -253,43 +269,7 @@ class xml():
 
 
 class Instruction:
-    list = {
-        "CREATEFRAME": [None],
-        "PUSHFRAME": [None],
-        "POPFRAME": [None],
-        "RETURN": [None],
-        "BREAK": [None],
-        "DEFVAR": ["var"],
-        "POPS": ["var"],
-        "CALL": ["label"],
-        "LABEL": ["label"],
-        "JUMP": ["label"],
-        "PUSHS": ["symb"],
-        "EXIT": ["symb"],
-        "DPRINT": ["symb"],
-        "WRITE": ["symb"],
-        "MOVE": ["var", "symb"],
-        "INT2CHAR": ["var", "symb"],
-        "STRLEN": ["var", "symb"],
-        "TYPE": ["var", "symb"],
-        "READ": ["var", "type"],
-        "ADD": ["var", "symb", "symb"],
-        "SUB": ["var", "symb", "symb"],
-        "MUL": ["var", "symb", "symb"],
-        "IDIV": ["var", "symb", "symb"],
-        "LT": ["var", "symb", "symb"],
-        "GT": ["var", "symb", "symb"],
-        "EQ": ["var", "symb", "symb"],
-        "AND": ["var", "symb", "symb"],
-        "OR": ["var", "symb", "symb"],
-        "NOT": ["var", "symb", "symb"],
-        "STRI2INT": ["var", "symb", "symb"],
-        "CONCAT": ["var", "symb", "symb"],
-        "GETCHAR": ["var", "symb", "symb"],
-        "SETCHAR": ["var", "symb", "symb"],
-        "JUMPIFEQ": ["label", "symb", "symb"],
-        "JUMPIFNEQ": ["label", "symb", "symb"]
-    }
+    """Trieda obsahujúca všetky potrebné informácie o každej inštrukcii a volanie implementácie každej jednotlivej inštrukcie"""    
 
     def __init__(self, opcode, order, list_of_args, arg1, arg2, arg3):
         self.opcode = opcode
@@ -313,9 +293,6 @@ class Instruction:
 
     def defVar(self, frame):
         frame.defVar(self)
-
-    def type(self, frame):
-        frame.type(self)
 
     def pushs(self, frame, stack):
         stack.pushs(self, frame)
@@ -347,29 +324,23 @@ class Instruction:
     def andI(self, frame):
         Logical.andI(self, frame)
 
-    def notI(self, frame):
-        Logical.notI(self, frame)
-
     def orI(self, frame):
         Logical.orI(self, frame)
 
-    def writeI(self, frame):
-        IO.writeI(self, frame, output_stream=sys.stdout)
-
-    def read(self, frame, xml):
-        IO.read(self, frame, xml)
-
-    def exit(self, frame):
-        IO.exit(self, frame)
-
-    def dprint(self, frame):
-        IO.dprint(self, frame)
+    def notI(self, frame):
+        Logical.notI(self, frame)
 
     def int2char(self, frame):
         String.int2char(self, frame)
 
     def stri2int(self, frame):
         String.stri2int(self, frame)
+
+    def read(self, frame, xml):
+        IO.read(self, frame, xml)
+
+    def writeI(self, frame):
+        IO.writeI(self, frame, output_stream=sys.stdout)
 
     def concat(self, frame):
         String.concat(self, frame)
@@ -383,41 +354,44 @@ class Instruction:
     def setchar(self, frame):
         String.setchar(self, frame)
 
-    def breakI(self, frame):
-        IO.breakI(self, frame)
-
-    def call(self, frame):
-        programFlow.call(self, frame)
-
-    def label(self, frame):
-        programFlow.label(self, frame)
+    def type(self, frame):
+        frame.type(self)
 
     def jump(self, frame, interpret):
         return programFlow.jump(self, frame, interpret)
 
     def jumpifeq(self, frame, interpret):
-        return programFlow.jumpifeq(self, frame,interpret)
+        return programFlow.jumpifeq(self, frame, interpret)
 
     def jumpifneq(self, frame, interpret):
         return programFlow.jumpifneq(self, frame, interpret)
 
+    def exit(self, frame):
+        IO.exit(self, frame)
+
+    def dprint(self, frame):
+        IO.dprint(self, frame)
+
+    def breakI(self, frame):
+        IO.breakI(self, frame)
+
 
 class Interpret:
+    """Trieda obsahujúca XML reprezentáciu kódu, list inštrukcií, jednotlivé rámce, zásobníky, návestia a zásobník volaní """    
 
     def __init__(self, xml):
         self.xml = xml
         self.Instruction_list = xml.instruction_list
-        self.counter = 0
         self.frame = Frame()
         self.stack = Stack()
         self.labels = []
         self.callStack = []
 
     def handleInstructions(self):
+        """Vykoná jednotlivé inštrukcie v poradí určenom pomocou order"""        
         program_counter = 0
         while (program_counter < len(self.Instruction_list)):
             instruction = self.Instruction_list[program_counter]
-            # print(instruction.opcode)
             match instruction.opcode.upper():
                 case "CREATEFRAME":
                     instruction.createFrame(self.frame)
@@ -426,8 +400,10 @@ class Interpret:
                 case "POPFRAME":
                     instruction.popFrame(self.frame)
                 case "RETURN":
-                    pass
-                    # instruction.returnI(self.frame)
+                    if self.callStack:
+                        program_counter = self.callStack.pop()
+                    else:
+                        Exit(Exit.EXIT_VALUE)
                 case "BREAK":
                     instruction.breakI(self.frame)
                 case "DEFVAR":
@@ -435,7 +411,12 @@ class Interpret:
                 case "POPS":
                     instruction.pops(self.frame, self.stack)
                 case "CALL":
-                    instruction.call(self.frame)
+                    self.callStack.append(program_counter)
+                    retValue = instruction.jump(self.frame, self)
+                    if retValue < len(self.Instruction_list):
+                        program_counter = retValue
+                    else:
+                        break
                 case "LABEL":
                     pass
                 case "JUMP":
@@ -491,12 +472,12 @@ class Interpret:
                 case "SETCHAR":
                     instruction.setchar(self.frame)
                 case "JUMPIFEQ":
-                    retValue = instruction.jumpifeq(self.frame,self)
+                    retValue = instruction.jumpifeq(self.frame, self)
                     if retValue != False and retValue < len(self.Instruction_list):
                         program_counter = retValue
-                         
+
                 case "JUMPIFNEQ":
-                    retValue = instruction.jumpifneq(self.frame,self)
+                    retValue = instruction.jumpifneq(self.frame, self)
                     if retValue != False and retValue < len(self.Instruction_list):
                         program_counter = retValue
                 case _:
@@ -642,9 +623,9 @@ class Relational:
                 if frame.isVar(instr.arg3):
                     arg3var = frame.getVar(instr.arg3)
                     # getvalue nil
-                if (instr.args[1]["type"] == "nil" or instr.args[2]["type"] == "nil") and operation != "eq" or (arg2var != None and arg2var.type == "nil" and arg3var != None and arg3var.type == "nil"  and operation != "eq"):
-                    Exit(Exit.EXIT_TYPE) 
-                elif instr.args[1]["type"] == "nil" and instr.args[2]["type"] == "nil" and operation == "eq" or (arg2var != None and arg2var.type == "nil" and arg3var != None and arg3var.type == "nil"  and operation == "eq"):
+                if (instr.args[1]["type"] == "nil" or instr.args[2]["type"] == "nil") and operation != "eq" or (arg2var != None and arg2var.type == "nil" and arg3var != None and arg3var.type == "nil" and operation != "eq"):
+                    Exit(Exit.EXIT_TYPE)
+                elif instr.args[1]["type"] == "nil" and instr.args[2]["type"] == "nil" and operation == "eq" or (arg2var != None and arg2var.type == "nil" and arg3var != None and arg3var.type == "nil" and operation == "eq"):
                     variable.type = "bool"
                     variable.value = "true"
                     break
@@ -655,8 +636,8 @@ class Relational:
                 elif instr.args[2]["type"] == "nil" and operation == "eq" or (arg3var != None and arg3var.type == "nil" and operation == "eq"):
                     variable.type = "bool"
                     variable.value = "false"
-                    break   
-                    
+                    break
+
                 if (instr.args[1]["type"] == instr.args[2]["type"] and instr.args[1]["type"] != "var"):
                     match instr.args[1]["type"]:
                         case "int":
@@ -705,16 +686,16 @@ class Relational:
                         case "bool":
                             arg2value = arg2var.value
                             arg3value = arg3var.value
-                            
+
                 else:
                     Exit(Exit.EXIT_TYPE)
-                if arg2value in ["true","false"] and arg3value in ["true","false"]:
+                if arg2value in ["true", "false"] and arg3value in ["true", "false"]:
                     match operation:
                         case "gt":
                             if arg2value == "true" and arg3value == "false":
                                 variable.value = "true"
                             else:
-                                variable.value = "false"     
+                                variable.value = "false"
                         case "lt":
                             if arg2value == "false" and arg3value == "true":
                                 variable.value = "true"
@@ -725,7 +706,7 @@ class Relational:
                 if arg2value != None and arg3value != None and type(arg2value) == int and type(arg3value) == int:
                     match operation:
                         case "gt":
-                            variable.value = arg2value > arg3value 
+                            variable.value = arg2value > arg3value
                         case "lt":
                             variable.value = arg2value < arg3value
                         case "eq":
@@ -733,12 +714,12 @@ class Relational:
                 elif arg2value != None and arg3value != None and type(arg2value) == str and type(arg3value) == str:
                     match operation:
                         case "gt":
-                            variable.value = arg2value > arg3value 
+                            variable.value = arg2value > arg3value
                         case "lt":
                             variable.value = arg2value < arg3value
                         case "eq":
                             variable.value = arg2value == arg3value
-                
+
                 else:
                     Exit(Exit.EXIT_TYPE)
                 variable = Arithmetic.setNone(variable, "bool")
@@ -750,7 +731,6 @@ class Relational:
                 frame.frame_now[frame.isDefined(
                     instr.arg1)].remove(variable)
                 frame.frame_now[oldFrame].append(variable)
-                
 
     @staticmethod
     def gt(instr, frame):
@@ -1076,7 +1056,7 @@ class String:
 
 class programFlow():
 
-    @staticmethod 
+    @staticmethod
     def base(instr, frame, interpret):
         label = None
         jumpPosition = None
@@ -1095,53 +1075,51 @@ class programFlow():
                 jumpPosition = instruction.order
         if jumpPosition != None:
             return jumpPosition
-        
-        
+
     @staticmethod
     def jump(instr, frame, interpret):
         return programFlow.base(instr, frame, interpret)
-        
 
     @staticmethod
     def jumpifeq(instr, frame, interpret):
         jumpPosition = programFlow.base(instr, frame, interpret)
-        if instr.args[1]["type"] in ["int","var","nil"] and instr.args[2]["type"] in ["int","var","nil"]:
+        if instr.args[1]["type"] in ["int", "var", "nil"] and instr.args[2]["type"] in ["int", "var", "nil"]:
             arg1val = None
             arg1type = None
             arg2val = None
             arg2type = None
-            
+
             if frame.isVar(instr.arg2):
                 arg1type = frame.getVar(instr.arg2).type
-                if arg1type != "nil": 
-                    arg1val = Arithmetic.getIntValue(frame,instr.arg2)
+                if arg1type != "nil":
+                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
                 else:
                     arg1val = "nil"
             else:
                 arg1type = instr.args[1]["type"]
-                if arg1type != "nil":   
-                    arg1val = Arithmetic.getIntValue(frame,instr.arg2)
+                if arg1type != "nil":
+                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
                 else:
                     arg1val = "nil"
-      
+
             if frame.isVar(instr.arg3):
                 arg2type = frame.getVar(instr.arg3).type
-                if arg2type != "nil": 
-                    arg2val = Arithmetic.getIntValue(frame,instr.arg3)
+                if arg2type != "nil":
+                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
                 else:
                     arg2val = "nil"
             else:
                 arg2type = instr.args[2]["type"]
-                if arg2type != "nil":   
-                    arg2val = Arithmetic.getIntValue(frame,instr.arg3)
+                if arg2type != "nil":
+                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
                 else:
                     arg2val = "nil"
-                    
+
             if arg1val == arg2val:
                 return jumpPosition
             else:
                 return False
-        elif instr.args[1]["type"] in ["string","var","nil"] and instr.args[2]["type"] in ["string","var","nil"]:
+        elif instr.args[1]["type"] in ["string", "var", "nil"] and instr.args[2]["type"] in ["string", "var", "nil"]:
             arg1val = None
             arg1type = None
             arg2val = None
@@ -1158,12 +1136,12 @@ class programFlow():
             else:
                 arg2val = IO.handleString(instr.arg3)
                 arg2type = instr.args[2]["type"]
-                
+
             if arg1val == arg2val:
                 return jumpPosition
             else:
                 return False
-        elif instr.args[1]["type"] in ["bool","var", "nil"] and instr.args[2]["type"] in ["bool","var", "nil"]:
+        elif instr.args[1]["type"] in ["bool", "var", "nil"] and instr.args[2]["type"] in ["bool", "var", "nil"]:
             arg1val = None
             arg1type = None
             arg2val = None
@@ -1180,56 +1158,54 @@ class programFlow():
             else:
                 arg2val = instr.arg3
                 arg2type = instr.args[2]["type"]
-                
+
             if arg1val == arg2val:
                 return jumpPosition
             else:
                 return False
         else:
             Exit(Exit.EXIT_TYPE)
-        
-        
 
     @staticmethod
-    def jumpifneq(instr, frame,interpret):
+    def jumpifneq(instr, frame, interpret):
         jumpPosition = programFlow.base(instr, frame, interpret)
-        if instr.args[1]["type"] in ["int","var","nil"] and instr.args[2]["type"] in ["int","var","nil"]:
+        if instr.args[1]["type"] in ["int", "var", "nil"] and instr.args[2]["type"] in ["int", "var", "nil"]:
             arg1val = None
             arg1type = None
             arg2val = None
             arg2type = None
-            
+
             if frame.isVar(instr.arg2):
                 arg1type = frame.getVar(instr.arg2).type
-                if arg1type != "nil": 
-                    arg1val = Arithmetic.getIntValue(frame,instr.arg2)
+                if arg1type != "nil":
+                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
                 else:
                     arg1val = "nil"
             else:
                 arg1type = instr.args[1]["type"]
-                if arg1type != "nil":   
-                    arg1val = Arithmetic.getIntValue(frame,instr.arg2)
+                if arg1type != "nil":
+                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
                 else:
                     arg1val = "nil"
-      
+
             if frame.isVar(instr.arg3):
                 arg2type = frame.getVar(instr.arg3).type
-                if arg2type != "nil": 
-                    arg2val = Arithmetic.getIntValue(frame,instr.arg3)
+                if arg2type != "nil":
+                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
                 else:
                     arg2val = "nil"
             else:
                 arg2type = instr.args[2]["type"]
-                if arg2type != "nil":   
-                    arg2val = Arithmetic.getIntValue(frame,instr.arg3)
+                if arg2type != "nil":
+                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
                 else:
                     arg2val = "nil"
-                    
+
             if arg1val != arg2val:
                 return jumpPosition
             else:
                 return False
-        elif instr.args[1]["type"] in ["string","var","nil"] and instr.args[2]["type"] in ["string","var","nil"]:
+        elif instr.args[1]["type"] in ["string", "var", "nil"] and instr.args[2]["type"] in ["string", "var", "nil"]:
             arg1val = None
             arg1type = None
             arg2val = None
@@ -1246,12 +1222,12 @@ class programFlow():
             else:
                 arg2val = IO.handleString(instr.arg3)
                 arg2type = instr.args[2]["type"]
-                
+
             if arg1val != arg2val:
                 return jumpPosition
             else:
                 return False
-        elif instr.args[1]["type"] in ["bool","var", "nil"] and instr.args[2]["type"] in ["bool","var", "nil"]:
+        elif instr.args[1]["type"] in ["bool", "var", "nil"] and instr.args[2]["type"] in ["bool", "var", "nil"]:
             arg1val = None
             arg1type = None
             arg2val = None
@@ -1268,21 +1244,13 @@ class programFlow():
             else:
                 arg2val = instr.arg3
                 arg2type = instr.args[2]["type"]
-                
+
             if arg1val != arg2val:
                 return jumpPosition
             else:
                 return False
         else:
             Exit(Exit.EXIT_TYPE)
-
-    @staticmethod
-    def call(instr, frame):
-        pass
-
-    @staticmethod
-    def label(instr, frame):
-        pass
 
 
 class IO():
@@ -1404,7 +1372,7 @@ class IO():
     @staticmethod
     def breakI(instr, frame):
         print(
-            f"\nOpcode: {instr.opcode}\nOrder: {instr.order}\nObsah rámcov:", file=sys.stderr)
+            f"\nOpcode: {instr.opcode}\nObsah rámcov:", file=sys.stderr)
         if frame.frame_now["GF"]:
             print("Global frame:", file=sys.stderr)
             frame.print("GF")
@@ -1418,7 +1386,6 @@ class IO():
     @staticmethod
     def handleString(value):
         try:
-            # value = value.replace('\\032', ' ')
             value = re.sub(r'&lt;', '<', value)
             value = re.sub(r'&gt;', '>', value)
             value = re.sub(r'&amp;', '&', value)
@@ -1452,7 +1419,7 @@ class Stack:
                     break
         else:
             if instr.args[0]["type"] == "int":
-                instr.arg1 = Arithmetic.getIntValue(frame,instr.arg1)
+                instr.arg1 = Arithmetic.getIntValue(frame, instr.arg1)
             elif instr.args[0]["type"] == "string":
                 instr.arg1 = IO.handleString(instr.arg1)
             new_const = Constant(instr.args[0]["type"], instr.arg1)
