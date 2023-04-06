@@ -500,32 +500,40 @@ class Arithmetic:
 
     @staticmethod
     def base(instr, frame, operation):
-        variable = frame.getVar(instr.arg1, none_check=False)
-        if ((instr.args[1]["type"] == "var" and frame.isDefined(instr.arg2)) or instr.args[1]["type"] == "int") and ((instr.args[2]["type"] == "var" and frame.isDefined(instr.arg3)) or instr.args[2]["type"] == "int"):
-            arg2value = Arithmetic.getIntValue(frame, instr.arg2)
-            arg3value = Arithmetic.getIntValue(frame, instr.arg3)
-            try:
-                match operation:
-                    case "add":
-                        if arg2value != None and arg3value != None:
-                            variable.value = arg2value + arg3value
-                    case "sub":
-                        if arg2value != None and arg3value != None:
-                            variable.value = arg2value - arg3value
-                    case "mul":
-                        if arg2value != None and arg3value != None:
-                            variable.value = arg2value * arg3value
-                    case "idiv":
-                        if arg2value != None and arg3value != None:
-                            if arg3value != 0:
-                                variable.value = arg2value // arg3value
+        variable = frame.getVar(instr.arg1, none_check=False) 
+         
+        if frame.isVar(instr.arg2):
+            arg2type = frame.getVar(instr.arg2).type
+        else:
+            arg2type = instr.args[1]["type"]
+        if frame.isVar(instr.arg3):
+            arg3type = frame.getVar(instr.arg3).type
+        else:
+            arg3type = instr.args[2]["type"]
+        
+        if arg2type == "int" and arg3type == "int":
+            arg2val = Arithmetic.getIntValue(frame, instr.arg2)
+            arg3val = Arithmetic.getIntValue(frame, instr.arg3)
+            if arg2val != None and arg3val != None:
+                try:
+                    match operation:
+                        case "add":
+                            variable.value = arg2val + arg3val
+                        case "sub":
+                            variable.value = arg2val - arg3val
+                        case "mul":
+                            variable.value = arg2val * arg3val
+                        case "idiv":
+                            if arg3val != 0:
+                                variable.value = arg2val // arg3val
                             else:
-                                raise SystemExit
-            except SystemExit:
-                Exit(Exit.EXIT_OPERAND)
-            except:
-                Exit(Exit.EXIT_XML_STRUCTURE)
-            variable = Arithmetic.setNone(variable, "int")
+                                raise Exception
+                except Exception:
+                    Exit(Exit.EXIT_OPERAND)
+                except:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+            else:
+                variable = Arithmetic.setNone(variable, "int")
             variable.type = "int"
         else:
             Exit(Exit.EXIT_TYPE)
@@ -548,6 +556,14 @@ class Arithmetic:
 
     @staticmethod
     def hexToDec(number):
+        """Prekonvertuje integer v hexadecimálnom formáte na decimálny
+
+        Args:
+            number (_type_): Číslo v hexadecimálnom formáte
+
+        Returns:
+            _type_: Číslo v decimálnom formáte
+        """
         try:
             number = int(number, 16)
         except:
@@ -556,6 +572,14 @@ class Arithmetic:
 
     @staticmethod
     def octaToDec(number):
+        """Prekonvertuje integer v oktalovom formáte na decimálny
+
+        Args:
+            number (_type_): Číslo v oktalovom formáte
+
+        Returns:
+            _type_: Číslo v decimálnom formáte
+        """
         try:
             number = int(number, 8)
         except:
@@ -564,6 +588,14 @@ class Arithmetic:
 
     @staticmethod
     def stringToInt(number):
+        """Prekonvertuje decimálne číslo v reťazci na decimálny integer
+
+        Args:
+            number (_type_): Decimálne číslo v reťazci
+
+        Returns:
+            _type_: Decimálny integer
+        """
         try:
             number = int(number)
         except:
@@ -584,6 +616,16 @@ class Arithmetic:
 
     @staticmethod
     def getIntValue(frame, instruction_argument, readFlag=None):
+        """Prekonvertuje číslo v reťazci na decimálny integer
+
+        Args:
+            frame (_type_): Rámec
+            instruction_argument (_type_): Číslo v reťazci
+            readFlag (_type_, optional): V prípade inštrukcie READ nebude vykonávaná kontrola na správnosť formátu čísla
+
+        Returns:
+            _type_: Decimálny integer
+        """
         number = None
         if instruction_argument != None and frame.isVar(instruction_argument) and readFlag == None:
             number = frame.getValueFromVar(instruction_argument)
@@ -605,118 +647,86 @@ class Arithmetic:
 class Relational:
     @staticmethod
     def base(instr, frame, operation):
-        variable = frame.getVar(instr.arg1, none_check=False)
-        arg2value = None
-        arg3value = None
-        arg2var = None
-        arg3var = None
-        # BAD RETURN CODE
+        """Podľa zadanej operácie vykoná relačnú operáciu na operandoch inštrukcie
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+            operation (_type_): lt, gt alebo eq
+        """
+        variable = frame.getVar(instr.arg1, none_check=False) 
+               
         if frame.isVar(instr.arg2):
-            arg2var = frame.getVar(instr.arg2)
+            arg2val = frame.getVar(instr.arg2).value
+            arg2type = frame.getVar(instr.arg2).type
+        else:
+            arg2val = instr.arg2
+            arg2type = instr.args[1]["type"]
         if frame.isVar(instr.arg3):
-            arg3var = frame.getVar(instr.arg3)
-        # getvalue nil
-        if (instr.args[1]["type"] == "nil" or instr.args[2]["type"] == "nil") and operation != "eq" or (arg2var != None and arg2var.type == "nil" and arg3var != None and arg3var.type == "nil" and operation != "eq"):
+            arg3val = frame.getVar(instr.arg3).value
+            arg3type = frame.getVar(instr.arg3).type
+        else:
+            arg3val = instr.arg3
+            arg3type = instr.args[2]["type"]
+        
+        if arg2type == "nil" and arg3type == "nil" and operation != "eq":
             Exit(Exit.EXIT_TYPE)
-        elif instr.args[1]["type"] == "nil" and instr.args[2]["type"] == "nil" and operation == "eq" or (arg2var != None and arg2var.type == "nil" and arg3var != None and arg3var.type == "nil" and operation == "eq"):
+        elif arg2type == "nil" and arg3type == "nil" and operation == "eq":
             variable.type = "bool"
             variable.value = "true"
             return
-        elif instr.args[1]["type"] == "nil" and operation == "eq" or (arg2var != None and arg2var.type == "nil" and operation == "eq"):
+        elif (arg2type == "nil" or arg3type == "nil") and operation == "eq":
             variable.type = "bool"
             variable.value = "false"
             return
-        elif instr.args[2]["type"] == "nil" and operation == "eq" or (arg3var != None and arg3var.type == "nil" and operation == "eq"):
-            variable.type = "bool"
-            variable.value = "false"
-            return
-
-        if (instr.args[1]["type"] == instr.args[2]["type"] and instr.args[1]["type"] != "var"):
-            match instr.args[1]["type"]:
+        
+        if arg2type == arg3type:
+            match arg2type:
                 case "int":
-                    arg2value = Arithmetic.getIntValue(frame, instr.arg2)
-                    arg3value = Arithmetic.getIntValue(frame, instr.arg3)
+                    arg2val = Arithmetic.getIntValue(frame, instr.arg2)
+                    arg3val = Arithmetic.getIntValue(frame, instr.arg3)
+                    if type(arg2val) == int and type(arg3val) == int:
+                        match operation:
+                            case "gt":
+                                variable.value = arg2val > arg3val
+                            case "lt":
+                                variable.value = arg2val < arg3val
+                            case "eq":
+                                variable.value = arg2val == arg3val
                 case "string":
-                    arg2value = IO.handleString(instr.arg2)
-                    arg3value = IO.handleString(instr.arg3)
+                    arg2val = IO.handleString(arg2val)
+                    arg3val = IO.handleString(arg3val)
+                    match operation:
+                        case "gt":
+                            variable.value = arg2val > arg3val
+                        case "lt":
+                            variable.value = arg2val < arg3val
+                        case "eq":
+                            variable.value = arg2val == arg3val
                 case "bool":
-                    arg2value = instr.arg2
-                    arg3value = instr.arg3
-        elif (arg2var != None and arg2var.type == instr.args[2]["type"]):
-            match arg2var.type:
-                case "int":
-                    arg2value = arg2var.value
-                    arg3value = Arithmetic.getIntValue(frame, instr.arg3)
-                case "string":
-                    arg2value = IO.handleString(arg2var.value)
-                    arg3value = IO.handleString(instr.arg3)
-                case "bool":
-                    arg2value = arg2var.value
-                    arg3value = instr.arg3
-        elif (arg3var != None and arg3var.type == instr.args[1]["type"]):
-            match arg3var.type:
-                case "int":
-                    arg2value = Arithmetic.getIntValue(frame, instr.arg2)
-                    arg3value = arg3var.value
-                case "string":
-                    arg2value = IO.handleString(instr.arg2)
-                    arg3value = IO.handleString(arg3var.value)
-                case "bool":
-                    arg2value = instr.arg2
-                    arg3value = arg3var.value
-        elif (arg2var != None and arg3var != None and arg2var.type == arg2var.type):
-            match arg2var.type:
-                case "int":
-                    arg2value = arg2var.value
-                    arg3value = arg3var.value
-                case "string":
-                    arg2value = IO.handleString(arg2var.value)
-                    arg3value = IO.handleString(arg3var.value)
-                case "bool":
-                    arg2value = arg2var.value
-                    arg3value = arg3var.value
-
+                    match operation:
+                        case "gt":
+                            if arg2val == "true" and arg3val == "false":
+                                variable.value = "true"
+                            else:
+                                variable.value = "false"
+                        case "lt":
+                            if arg2val == "false" and arg3val == "true":
+                                variable.value = "true"
+                            else:
+                                variable.value = "false"
+                        case "eq":
+                            variable.value = arg2val == arg3val
+                    
         else:
             Exit(Exit.EXIT_TYPE)
-        if arg2value in ["true", "false"] and arg3value in ["true", "false"]:
-            match operation:
-                case "gt":
-                    if arg2value == "true" and arg3value == "false":
-                        variable.value = "true"
-                    else:
-                        variable.value = "false"
-                case "lt":
-                    if arg2value == "false" and arg3value == "true":
-                        variable.value = "true"
-                    else:
-                        variable.value = "false"
-                case "eq":
-                    variable.value = arg2value == arg3value
-        if arg2value != None and arg3value != None and type(arg2value) == int and type(arg3value) == int:
-            match operation:
-                case "gt":
-                    variable.value = arg2value > arg3value
-                case "lt":
-                    variable.value = arg2value < arg3value
-                case "eq":
-                    variable.value = arg2value == arg3value
-        elif arg2value != None and arg3value != None and type(arg2value) == str and type(arg3value) == str:
-            match operation:
-                case "gt":
-                    variable.value = arg2value > arg3value
-                case "lt":
-                    variable.value = arg2value < arg3value
-                case "eq":
-                    variable.value = arg2value == arg3value
-
-        else:
-            Exit(Exit.EXIT_TYPE)
-        variable = Arithmetic.setNone(variable, "bool")
+            
         variable.type = "bool"
         if variable.value == True:
             variable.value = "true"
         elif variable.value == False:
             variable.value = "false"
+        
 
     @staticmethod
     def gt(instr, frame):
@@ -732,9 +742,17 @@ class Relational:
 
 
 class Logical:
+    """Trieda združujúca všetky logické operátory"""
 
     @staticmethod
     def base(instr, frame, operation):
+        """Podľa zadanej operácie vykoná logickú operáciu na operandoch inštrukcie
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+            operation (_type_): and, or alebo not
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         arg3var = None
@@ -808,9 +826,6 @@ class Logical:
             retValue = "true"
         elif (value1 == "true" and value2 == "false") or (value1 == "false" and value2 == "true") or (value1 == "false" and value2 == "false"):
             retValue = "false"
-        else:
-            # Exit(Exit.)
-            pass
         return retValue
 
     @staticmethod
@@ -822,15 +837,19 @@ class Logical:
             retValue = "true"
         elif (value1 == "false" and value2 == "false"):
             retValue = "false"
-        else:
-            # error
-            pass
         return retValue
 
 
 class String:
+    """Trieda združujúca všetky operácie s reťazcami"""
     @staticmethod
     def int2char(instr, frame):
+        """Prevedie číselnú hodnotu druhého argumentu na znak a uloží ho do premennej
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         if frame.isVar(instr.arg2):
@@ -852,6 +871,12 @@ class String:
 
     @staticmethod
     def stri2int(instr, frame):
+        """Uloží číselnú hodnotu znaku (druhý argument) na pozícii (tretí argument) do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         arg3var = None
@@ -880,6 +905,12 @@ class String:
 
     @staticmethod
     def concat(instr, frame):
+        """Spojí reťazec (druhý argument) s druhým reťazcom (tretí argument) a výsledok uloží do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         arg3var = None
@@ -911,6 +942,12 @@ class String:
 
     @staticmethod
     def strlen(instr, frame):
+        """Uloží dĺžku reťazca (druhý argument) do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         if frame.isVar(instr.arg2):
@@ -922,15 +959,21 @@ class String:
                 arg2value = IO.handleString(arg2var.value)
             else:
                 arg2value = IO.handleString(instr.arg2)
-                if arg2value == 'None':
-                    arg2value = ""
-                variable.value = len(arg2value)
-                variable.type = "int"
+            if arg2value == 'None':
+                arg2value = ""
+            variable.value = len(arg2value)
+            variable.type = "int"
         else:
             Exit(Exit.EXIT_TYPE)
 
     @staticmethod
     def getchar(instr, frame):
+        """Uloží reťazec (druhý argument) na pozícii (tretí argument) do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         arg3var = None
@@ -959,6 +1002,12 @@ class String:
 
     @staticmethod
     def setchar(instr, frame):
+        """Zmodifikuje znak reťazca uloženého v premennej (prvý argument) na pozícii (druhý argument) na znak v reťazci (tretí argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
         arg2var = None
         arg3var = None
@@ -994,9 +1043,18 @@ class String:
 
 
 class programFlow():
-
+    """Trieda združujúca všetky operácie ovplyvňujuce tok programu"""
     @staticmethod
-    def base(instr, interpret):
+    def jump(instr, interpret):
+        """Vykoná skok na návestie (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            interpret (_type_): Interpret pre prístup k návestiam
+
+        Returns:
+            _type_: Pozícia na ktorom sa návestie nachádza
+        """
         label = None
         jumpPosition = None
         if instr.args[0]["type"] != "label":
@@ -1016,259 +1074,157 @@ class programFlow():
             return jumpPosition
 
     @staticmethod
-    def jump(instr, interpret):
-        return programFlow.base(instr, interpret)
+    def jumpifBase(instr, frame, interpret, operation):
+        """Vykoná skok pri rovnosti (operácia ifeq) alebo nerovnosti (operácia ifneq) druhého a tretieho  argumentu
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+            interpret (_type_): Interpret pre prístup k návestiam
+            operation (_type_): Operácia ifeq alebo ifneq
+
+        Returns:
+            _type_: Pozícia na ktorom sa návestie nachádza
+        """
+        jumpPosition = programFlow.jump(instr, interpret)
+        if frame.isVar(instr.arg2):
+            arg1type = frame.getVar(instr.arg2).type
+            arg1val = frame.getVar(instr.arg2).value
+        else:
+            arg1type = instr.args[1]["type"]
+            arg1val = instr.arg2
+
+        if frame.isVar(instr.arg3):
+            arg2type = frame.getVar(instr.arg3).type
+            arg2val = frame.getVar(instr.arg3).value
+        else:
+            arg2type = instr.args[2]["type"]
+            arg2val = instr.arg3
+        if arg1type in ["int", "nil"] and arg2type in ["int", "nil"]:
+            if arg1type != "nil":
+                arg1val = Arithmetic.getIntValue(frame, instr.arg2)
+            else:
+                arg1val = "nil"
+
+            if arg2type != "nil":
+                arg2val = Arithmetic.getIntValue(frame, instr.arg3)
+            else:
+                arg2val = "nil"
+
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        elif arg1type in ["string", "nil"] and arg2type in ["string", "nil"]:
+            arg1val = IO.handleString(arg1val)
+            arg2val = IO.handleString(arg2val)
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        elif arg1type in ["bool", "nil"] and arg2type in ["bool",  "nil"]:
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        else:
+            Exit(Exit.EXIT_TYPE)
 
     @staticmethod
     def jumpifeq(instr, frame, interpret):
-        jumpPosition = programFlow.base(instr, interpret)
-        arg1val = None
-        arg1type = None
-        arg2val = None
-        arg2type = None
-        if instr.args[1]["type"] in ["int", "var", "nil"] and instr.args[2]["type"] in ["int", "var", "nil"]:
-            if frame.isVar(instr.arg2):
-                arg1type = frame.getVar(instr.arg2).type
-                if arg1type != "nil":
-                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
-                else:
-                    arg1val = "nil"
-            else:
-                arg1type = instr.args[1]["type"]
-                if arg1type != "nil":
-                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
-                else:
-                    arg1val = "nil"
-
-            if frame.isVar(instr.arg3):
-                arg2type = frame.getVar(instr.arg3).type
-                if arg2type != "nil":
-                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
-                else:
-                    arg2val = "nil"
-            else:
-                arg2type = instr.args[2]["type"]
-                if arg2type != "nil":
-                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
-                else:
-                    arg2val = "nil"
-
-            if arg1val == arg2val:
-                return jumpPosition
-            else:
-                return False
-        elif instr.args[1]["type"] in ["string", "var", "nil"] and instr.args[2]["type"] in ["string", "var", "nil"]:
-            if frame.isVar(instr.arg2):
-                arg1val = IO.handleString(frame.getVar(instr.arg2).value)
-                arg1type = frame.getVar(instr.arg2).type
-            else:
-                arg1val = IO.handleString(instr.arg2)
-                arg1type = instr.args[1]["type"]
-            if frame.isVar(instr.arg3):
-                arg2val = IO.handleString(frame.getVar(instr.arg3).value)
-                arg2type = frame.getVar(instr.arg3).type
-            else:
-                arg2val = IO.handleString(instr.arg3)
-                arg2type = instr.args[2]["type"]
-
-            if arg1val == arg2val:
-                return jumpPosition
-            else:
-                return False
-        elif instr.args[1]["type"] in ["bool", "var", "nil"] and instr.args[2]["type"] in ["bool", "var", "nil"]:
-            if frame.isVar(instr.arg2):
-                arg1val = frame.getVar(instr.arg2).value
-                arg1type = frame.getVar(instr.arg2).type
-            else:
-                arg1val = instr.arg2
-                arg1type = instr.args[1]["type"]
-            if frame.isVar(instr.arg3):
-                arg2val = frame.getVar(instr.arg3).value
-                arg2type = frame.getVar(instr.arg3).type
-            else:
-                arg2val = instr.arg3
-                arg2type = instr.args[2]["type"]
-
-            if arg1val == arg2val:
-                return jumpPosition
-            else:
-                return False
-        else:
-            Exit(Exit.EXIT_TYPE)
+        return programFlow.jumpifBase(instr, frame, interpret, "ifeq")
 
     @staticmethod
     def jumpifneq(instr, frame, interpret):
-        jumpPosition = programFlow.base(instr, interpret)
-        arg1val = None
-        arg1type = None
-        arg2val = None
-        arg2type = None
-        if instr.args[1]["type"] in ["int", "var", "nil"] and instr.args[2]["type"] in ["int", "var", "nil"]:
-            if frame.isVar(instr.arg2):
-                arg1type = frame.getVar(instr.arg2).type
-                if arg1type != "nil":
-                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
-                else:
-                    arg1val = "nil"
-            else:
-                arg1type = instr.args[1]["type"]
-                if arg1type != "nil":
-                    arg1val = Arithmetic.getIntValue(frame, instr.arg2)
-                else:
-                    arg1val = "nil"
-
-            if frame.isVar(instr.arg3):
-                arg2type = frame.getVar(instr.arg3).type
-                if arg2type != "nil":
-                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
-                else:
-                    arg2val = "nil"
-            else:
-                arg2type = instr.args[2]["type"]
-                if arg2type != "nil":
-                    arg2val = Arithmetic.getIntValue(frame, instr.arg3)
-                else:
-                    arg2val = "nil"
-
-            if arg1val != arg2val:
-                return jumpPosition
-            else:
-                return False
-        elif instr.args[1]["type"] in ["string", "var", "nil"] and instr.args[2]["type"] in ["string", "var", "nil"]:
-            if frame.isVar(instr.arg2):
-                arg1val = IO.handleString(frame.getVar(instr.arg2).value)
-                arg1type = frame.getVar(instr.arg2).type
-            else:
-                arg1val = IO.handleString(instr.arg2)
-                arg1type = instr.args[1]["type"]
-            if frame.isVar(instr.arg3):
-                arg2val = IO.handleString(frame.getVar(instr.arg3).value)
-                arg2type = frame.getVar(instr.arg3).type
-            else:
-                arg2val = IO.handleString(instr.arg3)
-                arg2type = instr.args[2]["type"]
-
-            if arg1val != arg2val:
-                return jumpPosition
-            else:
-                return False
-        elif instr.args[1]["type"] in ["bool", "var", "nil"] and instr.args[2]["type"] in ["bool", "var", "nil"]:
-            if frame.isVar(instr.arg2):
-                arg1val = frame.getVar(instr.arg2).value
-                arg1type = frame.getVar(instr.arg2).type
-            else:
-                arg1val = instr.arg2
-                arg1type = instr.args[1]["type"]
-            if frame.isVar(instr.arg3):
-                arg2val = frame.getVar(instr.arg3).value
-                arg2type = frame.getVar(instr.arg3).type
-            else:
-                arg2val = instr.arg3
-                arg2type = instr.args[2]["type"]
-
-            if arg1val != arg2val:
-                return jumpPosition
-            else:
-                return False
-        else:
-            Exit(Exit.EXIT_TYPE)
+        return programFlow.jumpifBase(instr, frame, interpret, "ifneq")
 
 
 class IO():
-
+    """Trieda združujúca všetky vstupnom-výstupné operácie"""
     @staticmethod
-    # overit spracovanie argumentov - iba jeden input alebo source mozu byt prazdny
     def read(instr, frame, xml):
+        """Načíta vstup  typu (druhý argument) zo štandardného vstupu alebo zo súboru pri zadanom argumentu --input=file a uloží výsledok do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+            xml (_type_): XML
+        """
         variable = frame.getVar(instr.arg1, none_check=False)
-        if instr.arg2 == "int":
-            if xml.args.input == "":
-                try:
-                    user_input = input()
-                except:
-                    user_input = None
-                variable.value = Arithmetic.getIntValue(
-                    frame, user_input, readFlag=True)
+        if xml.args.input == "":
+            try:
+                user_input = input()
+            except:
+                user_input = None
+        else:
+            try:
+                user_input = xml.args.input.readline().replace('\n', "")
+            except:
+                user_input = None
+                
+        if user_input == None:
+            variable.type = "nil"
+            variable.value = "nil"
+        elif instr.arg2 == "int":
+            if type(user_input) == int:
+                variable.value = user_input
             else:
-                try:
-                    user_input = xml.args.input.readline().replace('\n', "")
-                except:
-                    user_input = None
-                variable.value = Arithmetic.getIntValue(
-                    frame, user_input, readFlag=True)
-            variable.type = "int"
-            if variable.value == None:
-                variable.type = "nil"
-                variable.value = "nil"
+                variable.value = Arithmetic.getIntValue(frame, user_input, readFlag=True)
+                variable.type = "int"
+                if variable.value == None:
+                    variable.type = "nil"
+                    variable.value = "nil"
         elif instr.arg2 == "bool":
-            if xml.args.input == "":
-                try:
-                    user_input = input()
-                except:
-                    user_input = None
-            else:
-                try:
-                    user_input = xml.args.input.readline().replace('\n', "")
-                except:
-                    user_input = None
             variable.type = "bool"
-            if user_input == None:
-                variable.type = "nil"
-                variable.value = "nil"
-            elif user_input.upper() == "TRUE":
+            if user_input.upper() == "TRUE":
                 variable.value = "true"
             else:
                 variable.value = "false"
         elif instr.arg2 == "string":
-            if xml.args.input == "":
-                try:
-                    user_input = input()
-                except:
-                    user_input = None
-            else:
-                try:
-                    user_input = xml.args.input.readline().replace('\n', "")
-                except:
-                    user_input = None
-
-            if user_input != None:
-                variable.value = IO.handleString(user_input)
-                variable.type = "string"
-            else:
-                variable.type = "nil"
-                variable.value = "nil"
+            variable.value = IO.handleString(user_input)
+            variable.type = "string"       
         else:
             Exit(Exit.EXIT_XML_STRUCTURE)
+        
 
     @staticmethod
     def writeI(instr, frame, output_stream):
-        if instr.args[0]["type"] == "bool":
-            print(instr.arg1, end='', file=output_stream)
-        elif instr.args[0]["type"] == "nil":
-            print("", end='', file=output_stream)
-        elif instr.args[0]["type"] == "var":
-            if frame.isVar(instr.arg1):
-                variable = frame.getVar(instr.arg1, none_check=False)
-                if variable.value != None and variable.type != "nil":
-                    if variable.type == "string":
-                        print(IO.handleString(variable.value),
-                              end='', file=output_stream)
-                    else:
-                        print(variable.value, end='',
-                              file=output_stream)  # zatial takto
-                elif variable.value != None and variable.type == "nil":
-                    print("", end='', file=output_stream)
-                else:
-                    Exit(Exit.EXIT_VALUE)
-        elif instr.args[0]["type"] == "string":
-            print(IO.handleString(instr.arg1), end='', file=output_stream)
+        """Vypíše na štandardný výstup alebo štandardný chybový výstup hodnotu prvého argumentu
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+            output_stream (_type_): Štandardný výstup alebo štandardný chybový výstup
+        """
+        if frame.isVar(instr.arg1):
+            arg1type = frame.getVar(instr.arg1).type
+            arg1val = frame.getVar(instr.arg1).value
         else:
-            if instr.arg1 != None:
-                print(instr.arg1, end='', file=output_stream)
+            arg1type = instr.args[0]["type"]
+            arg1val = instr.arg1
+        if arg1type == "bool":
+            print(arg1val, end='', file=output_stream)
+        elif arg1type == "nil":
+            print("", end='', file=output_stream)
+        elif arg1type == "string":
+            print(IO.handleString(arg1val), end='', file=output_stream)
+        elif arg1type == "int":
+            if type(arg1val) == int:
+                print(arg1val, end='', file=output_stream)
             else:
-                Exit(Exit.EXIT_VALUE)
+                print(Arithmetic.getIntValue(frame, arg1val),
+                      end='', file=output_stream)
+        else:
+            Exit(Exit.EXIT_VALUE)
 
     @staticmethod
     def exit(instr, frame):
+        """Ukončí vykonávanie programu s návratovým kódom podľa prvého argumentu
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         if instr.args[0]["type"] in ["var", "int"]:
             value = Arithmetic.getIntValue(frame, instr.arg1)
             if value != None:
@@ -1285,6 +1241,12 @@ class IO():
 
     @staticmethod
     def breakI(instr, frame):
+        """Vypíše na štandardný chybový výstup stav interpretu
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         print(
             f"\nOpcode: {instr.opcode}\nObsah rámcov:", file=sys.stderr)
         if frame.frame_now["GF"]:
@@ -1299,6 +1261,14 @@ class IO():
 
     @staticmethod
     def handleString(value):
+        """Spracuje reťazec - vymení escape sekvencie a špeciálne xml znaky za ich znakovú reprezentáciu
+
+        Args:
+            value (_type_): Reťazec na spracovanie
+
+        Returns:
+            _type_: Spracovaný reťazec
+        """
         try:
             value = re.sub(r'&lt;', '<', value)
             value = re.sub(r'&gt;', '>', value)
@@ -1311,17 +1281,25 @@ class IO():
                     value = re.sub(r'\\\d{3}', chr(
                         int(sub[0][1:])), value, count=1)
                 else:
-                    raise SystemExit
+                    raise Exception
         except:
             return value
         return value
 
 
 class Stack:
+    """Trieda združujúca všetky operácie nad dátovým zásobníkom"""
+
     def __init__(self):
         self.dataStack = []
 
     def pushs(self, instr, frame):
+        """Vloži na zásobník hodnotu prvého operandu inštrukcie
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         if frame.isDefined(instr.arg1) == "TF" or frame.isDefined(instr.arg1) == "LF" or frame.isDefined(instr.arg1) == "GF":
             variable = frame.getVar(instr.arg1, none_check=False)
             if variable.value == None or variable.type == None:
@@ -1338,6 +1316,12 @@ class Stack:
             self.dataStack.append(new_const)
 
     def pops(self, instr, frame):
+        """Vyberie zo zásobníka hodnotu a vloži ju do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
         if not self.dataStack:
             Exit(Exit.EXIT_VALUE)
         if frame.isDefined(instr.arg1) == "TF" or frame.isDefined(instr.arg1) == "LF" or frame.isDefined(instr.arg1) == "GF":
@@ -1352,6 +1336,8 @@ class Stack:
 
 
 class Frame:
+    """Trieda združujúca operácie nad jednotlivými rámcami"""
+
     def __init__(self):
         self.frame_now = {"GF": [], "LF": [], "TF": []}
         self.frameStack = []
@@ -1359,10 +1345,20 @@ class Frame:
         self.temp_frame = False
 
     def print(self, toPrint):
+        """Vypíše obsah rámca na štandardný chybový výstup
+
+        Args:
+            toPrint (_type_): Rámec, ktorý má byť vypísaný
+        """
         for variable in self.frame_now[toPrint]:
             print(variable.name, file=sys.stderr)
 
     def move(self, instr):
+        """Presunie hodnotu z druhého argumentu do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+        """
         variable = self.getVar(instr.arg1, none_check=False)
         if variable != None and (instr.args[1]["type"] == "int" or instr.args[1]["type"] == "bool" or instr.args[1]["type"] == "string" or instr.args[1]["type"] == "nil"):
             match instr.args[1]["type"]:
@@ -1370,17 +1366,20 @@ class Frame:
                     variable.value = Arithmetic.getIntValue(
                         self, instr.arg2)
                 case _:
-                    variable.value = instr.arg2
+                    variable.value = IO.handleString(instr.arg2)
             variable.type = instr.args[1]["type"]
         elif variable != None and instr.args[1]["type"] == "var":
             var = self.getVar(instr.arg2)
             if var != None:
                 variable.value = var.value
                 variable.type = var.type
-        else:
-            pass  # nejake osetrenie
 
     def type(self, instr):
+        """Vloží typ druhého argumentu do premennej (prvý argument)
+
+        Args:
+            instr (_type_): Inštrukcia
+        """
         variable = self.getVar(instr.arg1, none_check=False)
         if variable != None and instr.args[1]["type"] == "var":
             var = self.getVar(instr.arg2, none_check=True)
@@ -1395,6 +1394,11 @@ class Frame:
             variable.type = "string"
 
     def defVar(self, instr):
+        """Definuje premennú v jej zadanom rámci
+
+        Args:
+            instr (_type_): Inštrukcia
+        """
         if re.match(r'\s*GF@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)(_|-|\$|&|%|\*|!|\?|[0-9][A-Z]|[a-z]|[0-9]|[A-Z]|\?|!|\*|&|%|_|-|\$)*\s*$', instr.arg1):
             self.isRedefined(instr, "GF")
             self.frame_now["GF"].append(var(instr.arg1, "GF"))
@@ -1410,10 +1414,12 @@ class Frame:
             Exit(Exit.EXIT_XML_STRUCTURE)
 
     def create(self):
+        """Vytvorí dočasný zásobník"""
         self.temp_frame = True
         self.frame_now["TF"].clear()
 
     def push(self):
+        """Vloží dočasný rámec do zásobníka lokálnych rámcov"""
         self.isFrame("TF")
         if self.local_frame == True:
             self.frameStack.append(self.frame_now["LF"])
@@ -1427,6 +1433,7 @@ class Frame:
         self.local_frame = True
 
     def pop(self):
+        """Vyberie lokálny rámec a vloží ho do dočasného rámca"""
         self.isFrame("LF")
         self.frame_now["TF"].clear()
         for variable in self.frame_now["LF"]:
@@ -1442,12 +1449,16 @@ class Frame:
             self.frame_now["LF"] = self.frameStack.pop()
 
     def isFrame(self, frame):
+        """Overí, či existuje zadaný rámec
+
+        Args:
+            frame (_type_): Rámec, ktorého existencia má byť skontrolovaná
+        """
         if frame == "TF" and self.temp_frame == False:
             Exit(Exit.EXIT_FRAME)
         elif frame == "LF" and self.local_frame == False:
             Exit(Exit.EXIT_FRAME)
 
-    # is redefined?
     def isRedefined(self, instr, frame):
         for instruction in self.frame_now[frame]:
             if instruction.name == instr.arg1:
@@ -1486,14 +1497,12 @@ class Frame:
             return False
 
     def getValueFromVar(self, arg):
-        for variable in self.frame_now[str(self.isDefined(arg))]:
-            if variable.name == arg:
-                if variable.value == None:
-                    Exit(Exit.EXIT_VALUE)
-                return variable.value
+        variable = self.getVar(arg)
+        if variable != None:
+            return variable.value
+        return None
 
     def getVar(self, arg, none_check=None):
-
         for variable in self.frame_now[str(self.isDefined(arg))]:
             if variable.name == arg:
                 if variable.value == None and none_check == None:
