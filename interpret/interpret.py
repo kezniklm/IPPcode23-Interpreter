@@ -74,7 +74,7 @@ class Exit:
             case self.EXIT_SUCCESS:
                 if help == True:
                     print(
-                        "Názov:\ninterpret.py - interpret jazyka IPPcode23 v XML reprezentácii kódu\n\nPoužitie:\n    python3 interpret.py [MOŽNOSTI]\nPopis:\n    interpret.py vykoná interpretáciu XML reprezentácie kódu zo zdrojovového súboru\nMOŽNOSTI\n    --help\n        Vypíše pomocnú hlášku pre skript interpet.py\n    --source=file\n        Vstupný súbor s XML reprezentaciou zdrojového kódu\n    --input=file\n        Súbor so vstupmi pre samotú interpretáciu zadaného zdrojového kódu", file=sys.stdout)
+                        "Názov:\ninterpret.py - interpret jazyka IPPcode23 v XML reprezentácii kódu\n\nPoužitie:\n    python3 interpret.py [MOŽNOSTI]\nPopis:\n    interpret.py vykoná interpretáciu XML reprezentácie kódu zo zdrojovového súboru\n\nMOŽNOSTI\n    --help\n        Vypíše pomocnú hlášku pre skript interpet.py\n    --source=file\n        Vstupný súbor s XML reprezentaciou zdrojového kódu\n    --input=file\n        Súbor so vstupmi pre samotú interpretáciu zadaného zdrojového kódu", file=sys.stdout)
                 sys.exit(type)
             case self.EXIT_PARAM:
                 err_message = "CHYBA:\nZadaná chybná kombinácia alebo chybný počet argumentov skriptu interpret.py\n"
@@ -103,7 +103,7 @@ class Exit:
         sys.exit(type)
 
 
-class xml():
+class XML():
     """Spracuje, skontroluje a rozparsuje zadaný vstupný súbor s XML reprezentáciou kódu"""
 
     def __init__(self, args):
@@ -359,13 +359,13 @@ class Instruction:
         frame.type(self)
 
     def jump(self, interpret):
-        return programFlow.jump(self, interpret)
+        return ProgramFlow.jump(self, interpret)
 
     def jumpifeq(self, frame, interpret):
-        return programFlow.jumpifeq(self, frame, interpret)
+        return ProgramFlow.jumpifeq(self, frame, interpret)
 
     def jumpifneq(self, frame, interpret):
-        return programFlow.jumpifneq(self, frame, interpret)
+        return ProgramFlow.jumpifneq(self, frame, interpret)
 
     def exit(self, frame):
         IO.exit(self, frame)
@@ -1042,7 +1042,7 @@ class String:
             Exit(Exit.EXIT_TYPE)
 
 
-class programFlow():
+class ProgramFlow():
     """Trieda združujúca všetky operácie ovplyvňujuce tok programu"""
     @staticmethod
     def jump(instr, interpret):
@@ -1086,7 +1086,7 @@ class programFlow():
         Returns:
             _type_: Pozícia na ktorom sa návestie nachádza
         """
-        jumpPosition = programFlow.jump(instr, interpret)
+        jumpPosition = ProgramFlow.jump(instr, interpret)
         if frame.isVar(instr.arg2):
             arg1type = frame.getVar(instr.arg2).type
             arg1val = frame.getVar(instr.arg2).value
@@ -1132,11 +1132,11 @@ class programFlow():
 
     @staticmethod
     def jumpifeq(instr, frame, interpret):
-        return programFlow.jumpifBase(instr, frame, interpret, "ifeq")
+        return ProgramFlow.jumpifBase(instr, frame, interpret, "ifeq")
 
     @staticmethod
     def jumpifneq(instr, frame, interpret):
-        return programFlow.jumpifBase(instr, frame, interpret, "ifneq")
+        return ProgramFlow.jumpifBase(instr, frame, interpret, "ifneq")
 
 
 class IO():
@@ -1527,7 +1527,7 @@ class Constant:
 
 class Program:
     args = Arguments()
-    XML = xml(args)
+    XML = XML(args)
     XML.check()
     XML.parse()
     XML.sort()
