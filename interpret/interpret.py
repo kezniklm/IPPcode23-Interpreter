@@ -1304,9 +1304,8 @@ class Stack:
             variable = frame.getVar(instr.arg1, none_check=False)
             if variable.value == None or variable.type == None:
                 Exit(Exit.EXIT_VALUE)
-            self.dataStack.append(variable)
-            frame.frame_now[frame.isDefined(
-                instr.arg1)].remove(variable)
+            new_const = Constant(variable.type, variable.value)
+            self.dataStack.append(new_const)
         else:
             if instr.args[0]["type"] == "int":
                 instr.arg1 = Arithmetic.getIntValue(frame, instr.arg1)
