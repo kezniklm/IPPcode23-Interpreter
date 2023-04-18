@@ -181,19 +181,19 @@ class XML():
         """
         arg_min = -1
         match instruction.upper():
-            case "CREATEFRAME" | "PUSHFRAME" | "POPFRAME" | "RETURN" | "BREAK":
+            case "CREATEFRAME" | "PUSHFRAME" | "POPFRAME" | "RETURN" | "BREAK" | "CLEARS" | "ADDS" | "SUBS" | "MULS" | "IDIVS" | "LTS" | "GTS" | "EQS" | "ANDS" | "ORS" | "NOTS" | "INT2CHARS" | "STRI2INTS":
                 arg_min = 0
             case "POPS" | "DEFVAR":
                 arg_min = 1
-            case "CALL" | "LABEL" | "JUMP":
+            case "CALL" | "LABEL" | "JUMP" | "JUMPIFEQS" | "JUMPIFNEQS":
                 arg_min = 1
             case "PUSHS" | "WRITE" | "EXIT" | "DPRINT":
                 arg_min = 1
-            case "MOVE" | "INT2CHAR" | "STRLEN" | "TYPE" | "NOT":
+            case "MOVE" | "INT2CHAR" | "INT2FLOAT" | "FLOAT2INT" | "STRLEN" | "TYPE" | "NOT":
                 arg_min = 2
             case "READ":
                 arg_min = 2
-            case "ADD" | "SUB" | "MUL" | "IDIV" | "LT" | "GT" | "EQ" | "OR" | "AND" | "STRI2INT" | "CONCAT" | "GETCHAR" | "SETCHAR":
+            case "ADD" | "SUB" | "MUL" | "IDIV" | "DIV" | "LT" | "GT" | "EQ" | "OR" | "AND" | "STRI2INT" | "CONCAT" | "GETCHAR" | "SETCHAR":
                 arg_min = 3
             case "JUMPIFEQ" | "JUMPIFNEQ":
                 arg_min = 3
@@ -301,6 +301,51 @@ class Instruction:
     def pops(self, frame, stack):
         stack.pops(self, frame)
 
+    def clears(self, stack):
+        stack.clears()
+
+    def adds(self, frame, stack):
+        stack.adds(frame)
+
+    def subs(self, frame, stack):
+        stack.subs(frame)
+
+    def muls(self, frame, stack):
+        stack.muls(frame)
+
+    def idivs(self, frame, stack):
+        stack.idivs(frame)
+
+    def lts(self, frame, stack):
+        stack.lts(frame)
+
+    def gts(self, frame, stack):
+        stack.gts(frame)
+
+    def eqs(self, frame, stack):
+        stack.eqs(frame)
+
+    def ands(self, stack):
+        stack.ands()
+
+    def ors(self, stack):
+        stack.ors()
+
+    def nots(self, stack):
+        stack.nots()
+
+    def int2chars(self, stack):
+        stack.int2chars()
+
+    def stri2ints(self, frame, stack):
+        stack.stri2ints(frame)
+
+    def jumpifeqs(self, frame, interpret, stack):
+        return stack.jumpifeqs(self, frame, interpret)
+
+    def jumpifneqs(self, frame, interpret, stack):
+        return stack.jumpifneqs(self, frame, interpret)
+
     def add(self, frame):
         Arithmetic.add(self, frame)
 
@@ -312,6 +357,9 @@ class Instruction:
 
     def idiv(self, frame):
         Arithmetic.idiv(self, frame)
+
+    def div(self, frame):
+        Arithmetic.div(self, frame)
 
     def lt(self, frame):
         Relational.lt(self, frame)
@@ -333,6 +381,12 @@ class Instruction:
 
     def int2char(self, frame):
         String.int2char(self, frame)
+
+    def int2float(self, frame):
+        Arithmetic.int2float(self, frame)
+
+    def float2int(self, frame):
+        Arithmetic.float2int(self, frame)
 
     def stri2int(self, frame):
         String.stri2int(self, frame)
@@ -411,6 +465,42 @@ class Interpret:
                     instruction.defVar(self.frame)
                 case "POPS":
                     instruction.pops(self.frame, self.stack)
+                case "CLEARS":
+                    instruction.clears(self.stack)
+                case "ADDS":
+                    instruction.adds(self.frame, self.stack)
+                case "SUBS":
+                    instruction.subs(self.frame, self.stack)
+                case "MULS":
+                    instruction.muls(self.frame, self.stack)
+                case "IDIVS":
+                    instruction.idivs(self.frame, self.stack)
+                case "LTS":
+                    instruction.lts(self.frame, self.stack)
+                case "GTS":
+                    instruction.gts(self.frame, self.stack)
+                case "EQS":
+                    instruction.eqs(self.frame, self.stack)
+                case "ANDS":
+                    instruction.ands(self.stack)
+                case "ORS":
+                    instruction.ors(self.stack)
+                case "NOTS":
+                    instruction.nots(self.stack)
+                case "INT2CHARS":
+                    instruction.int2chars(self.stack)
+                case "STRI2INTS":
+                    instruction.stri2ints(self.frame, self.stack)
+                case "JUMPIFEQS":
+                    retValue = instruction.jumpifeqs(
+                        self.frame, self, self.stack)
+                    if retValue != False and retValue < len(self.Instruction_list):
+                        program_counter = retValue
+                case "JUMPIFNEQS":
+                    retValue = instruction.jumpifneqs(
+                        self.frame, self, self.stack)
+                    if retValue != False and retValue < len(self.Instruction_list):
+                        program_counter = retValue
                 case "CALL":
                     self.callStack.append(program_counter)
                     retValue = instruction.jump(self)
@@ -438,6 +528,10 @@ class Interpret:
                     instruction.move(self.frame)
                 case "INT2CHAR":
                     instruction.int2char(self.frame)
+                case "INT2FLOAT":
+                    instruction.int2float(self.frame)
+                case "FLOAT2INT":
+                    instruction.float2int(self.frame)
                 case "STRLEN":
                     instruction.strlen(self.frame)
                 case "TYPE":
@@ -454,6 +548,8 @@ class Interpret:
                     instruction.mul(self.frame)
                 case "IDIV":
                     instruction.idiv(self.frame)
+                case "DIV":
+                    instruction.div(self.frame)
                 case "LT":
                     instruction.lt(self.frame)
                 case "GT":
@@ -500,8 +596,8 @@ class Arithmetic:
 
     @staticmethod
     def base(instr, frame, operation):
-        variable = frame.getVar(instr.arg1, none_check=False) 
-         
+        variable = frame.getVar(instr.arg1, none_check=False)
+
         if frame.isVar(instr.arg2):
             arg2type = frame.getVar(instr.arg2).type
         else:
@@ -510,7 +606,7 @@ class Arithmetic:
             arg3type = frame.getVar(instr.arg3).type
         else:
             arg3type = instr.args[2]["type"]
-        
+
         if arg2type == "int" and arg3type == "int":
             arg2val = Arithmetic.getIntValue(frame, instr.arg2)
             arg3val = Arithmetic.getIntValue(frame, instr.arg3)
@@ -535,6 +631,28 @@ class Arithmetic:
             else:
                 variable = Arithmetic.setNone(variable, "int")
             variable.type = "int"
+        elif arg2type == "float" and arg3type == "float":
+            arg2val = Arithmetic.getDecFloat(frame, instr.arg2)
+            arg3val = Arithmetic.getDecFloat(frame, instr.arg3)
+            if arg2val != None and arg3val != None:
+                try:
+                    match operation:
+                        case "add":
+                            variable.value = arg2val + arg3val
+                        case "sub":
+                            variable.value = arg2val - arg3val
+                        case "mul":
+                            variable.value = arg2val * arg3val
+                        case "div":
+                            if arg3val != 0:
+                                variable.value = arg2val / arg3val
+                            else:
+                                raise Exception
+                except Exception:
+                    Exit(Exit.EXIT_OPERAND)
+                except:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+            variable.type = "float"
         else:
             Exit(Exit.EXIT_TYPE)
 
@@ -553,6 +671,55 @@ class Arithmetic:
     @staticmethod
     def idiv(instr, frame):
         Arithmetic.base(instr, frame, operation="idiv")
+
+    @staticmethod
+    def div(instr, frame):
+        Arithmetic.base(instr, frame, operation="div")
+
+    @staticmethod
+    def int2float(instr, frame):
+        float_value = None
+        variable = frame.getVar(instr.arg1, none_check=False)
+        if frame.isVar(instr.arg2):
+            arg2type = frame.getVar(instr.arg2).type
+        else:
+            arg2type = instr.args[1]["type"]
+
+        if arg2type == "int":
+            arg2val = Arithmetic.getIntValue(frame, instr.arg2)
+            if arg2val != None:
+                try:
+                    float_value = float(arg2val)
+                except:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                variable.value = float_value
+                variable.type = "float"
+            else:
+                Exit(Exit.EXIT_XML_STRUCTURE)
+        else:
+            Exit(Exit.EXIT_TYPE)
+
+    @staticmethod
+    def float2int(instr, frame):
+        int_value = None
+        variable = frame.getVar(instr.arg1, none_check=False)
+        if frame.isVar(instr.arg2):
+            arg2type = frame.getVar(instr.arg2).type
+        else:
+            arg2type = instr.args[1]["type"]
+        if arg2type == "float":
+            arg2val = Arithmetic.getFloatFromString(frame, instr.arg2)
+            if arg2val != None:
+                try:
+                    int_value = int(arg2val)
+                except:
+                    Exit(Exit.EXIT_XML_STRUCTURE)
+                variable.value = int_value
+                variable.type = "int"
+            else:
+                Exit(Exit.EXIT_XML_STRUCTURE)
+        else:
+            Exit(Exit.EXIT_TYPE)
 
     @staticmethod
     def hexToDec(number):
@@ -627,6 +794,8 @@ class Arithmetic:
             _type_: Decimálny integer
         """
         number = None
+        if type(instruction_argument) == int:
+            return instruction_argument
         if instruction_argument != None and frame.isVar(instruction_argument) and readFlag == None:
             number = frame.getValueFromVar(instruction_argument)
             if type(number) != int:
@@ -643,6 +812,64 @@ class Arithmetic:
             Exit(Exit.EXIT_XML_STRUCTURE)
         return number
 
+    @staticmethod
+    def getDecFloat(frame, instruction_argument):
+        decimal_argument = None
+        if type(instruction_argument) == float:
+            return instruction_argument
+        elif frame.isVar(instruction_argument):
+            argument = frame.getVar(
+                instruction_argument, none_check=False).value
+            if type(argument) == float:
+                return argument
+        else:
+            argument = instruction_argument
+        try:
+            decimal_argument = float.fromhex(argument)
+        except ValueError:
+            return argument
+        except:
+            Exit(Exit.EXIT_XML_STRUCTURE)
+        return decimal_argument
+
+    @staticmethod
+    def getHexFloat(frame, instruction_argument):
+        hex_argument = None
+        if type(instruction_argument) != float and frame.isVar(instruction_argument):
+            argument = frame.getVar(
+                instruction_argument, none_check=False).value
+        else:
+            argument = instruction_argument
+        try:
+            hex_argument = float.hex(argument)
+        except ValueError:
+            return argument
+        except:
+            Exit(Exit.EXIT_XML_STRUCTURE)
+        return hex_argument
+
+    @staticmethod
+    def getFloatFromString(frame, instruction_argument):
+        float_number = None
+        if type(instruction_argument) == float:
+            float_number = instruction_argument
+        elif frame.isVar(instruction_argument):
+            argument = frame.getVar(
+                instruction_argument, none_check=False).value
+            if type(argument) == float:
+                return argument
+        elif re.match(r'^[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?$', instruction_argument):
+            try:
+                float_number = float(instruction_argument)
+            except:
+                Exit(Exit.EXIT_XML_STRUCTURE)
+        elif re.match(r'^[-+]?0x[\da-fA-F]+(\.[\da-fA-F]*)?(p[-+]?[\d]+)?$', instruction_argument):
+            float_number = Arithmetic.getDecFloat(frame, instruction_argument)
+        else:
+            Exit(Exit.EXIT_XML_STRUCTURE)
+
+        return float_number
+
 
 class Relational:
     @staticmethod
@@ -654,8 +881,8 @@ class Relational:
             frame (_type_): Rámec
             operation (_type_): lt, gt alebo eq
         """
-        variable = frame.getVar(instr.arg1, none_check=False) 
-               
+        variable = frame.getVar(instr.arg1, none_check=False)
+
         if frame.isVar(instr.arg2):
             arg2val = frame.getVar(instr.arg2).value
             arg2type = frame.getVar(instr.arg2).type
@@ -668,7 +895,7 @@ class Relational:
         else:
             arg3val = instr.arg3
             arg3type = instr.args[2]["type"]
-        
+
         if arg2type == "nil" and arg3type == "nil" and operation != "eq":
             Exit(Exit.EXIT_TYPE)
         elif arg2type == "nil" and arg3type == "nil" and operation == "eq":
@@ -679,13 +906,24 @@ class Relational:
             variable.type = "bool"
             variable.value = "false"
             return
-        
+
         if arg2type == arg3type:
             match arg2type:
                 case "int":
                     arg2val = Arithmetic.getIntValue(frame, instr.arg2)
                     arg3val = Arithmetic.getIntValue(frame, instr.arg3)
                     if type(arg2val) == int and type(arg3val) == int:
+                        match operation:
+                            case "gt":
+                                variable.value = arg2val > arg3val
+                            case "lt":
+                                variable.value = arg2val < arg3val
+                            case "eq":
+                                variable.value = arg2val == arg3val
+                case "float":
+                    arg2val = Arithmetic.getFloatFromString(frame, instr.arg2)
+                    arg3val = Arithmetic.getFloatFromString(frame, instr.arg3)
+                    if type(arg2val) == float and type(arg3val) == float:
                         match operation:
                             case "gt":
                                 variable.value = arg2val > arg3val
@@ -717,16 +955,15 @@ class Relational:
                                 variable.value = "false"
                         case "eq":
                             variable.value = arg2val == arg3val
-                    
+
         else:
             Exit(Exit.EXIT_TYPE)
-            
+
         variable.type = "bool"
         if variable.value == True:
             variable.value = "true"
         elif variable.value == False:
             variable.value = "false"
-        
 
     @staticmethod
     def gt(instr, frame):
@@ -1115,6 +1352,21 @@ class ProgramFlow():
                 return jumpPosition
             else:
                 return False
+        elif arg1type in ["float", "nil"] and arg2type in ["float", "nil"]:
+            if arg1type != "nil":
+                arg1val = Arithmetic.getFloatFromString(frame, instr.arg2)
+            else:
+                arg1val = "nil"
+
+            if arg2type != "nil":
+                arg2val = Arithmetic.getFloatFromString(frame, instr.arg3)
+            else:
+                arg2val = "nil"
+
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
         elif arg1type in ["string", "nil"] and arg2type in ["string", "nil"]:
             arg1val = IO.handleString(arg1val)
             arg2val = IO.handleString(arg2val)
@@ -1141,9 +1393,10 @@ class ProgramFlow():
 
 class IO():
     """Trieda združujúca všetky vstupnom-výstupné operácie"""
+
     @staticmethod
     def read(instr, frame, xml):
-        """Načíta vstup  typu (druhý argument) zo štandardného vstupu alebo zo súboru pri zadanom argumentu --input=file a uloží výsledok do premennej (prvý argument)
+        """Načíta vstup typu (druhý argument) zo štandardného vstupu alebo zo súboru pri zadanom argumentu --input=file a uloží výsledok do premennej (prvý argument)
 
         Args:
             instr (_type_): Inštrukcia
@@ -1161,7 +1414,7 @@ class IO():
                 user_input = xml.args.input.readline().replace('\n', "")
             except:
                 user_input = None
-                
+
         if user_input == None:
             variable.type = "nil"
             variable.value = "nil"
@@ -1169,7 +1422,8 @@ class IO():
             if type(user_input) == int:
                 variable.value = user_input
             else:
-                variable.value = Arithmetic.getIntValue(frame, user_input, readFlag=True)
+                variable.value = Arithmetic.getIntValue(
+                    frame, user_input, readFlag=True)
                 variable.type = "int"
                 if variable.value == None:
                     variable.type = "nil"
@@ -1182,10 +1436,13 @@ class IO():
                 variable.value = "false"
         elif instr.arg2 == "string":
             variable.value = IO.handleString(user_input)
-            variable.type = "string"       
+            variable.type = "string"
+        elif instr.arg2 == "float":
+            variable.type = "float"
+            variable.value = Arithmetic.getFloatFromString(
+                frame, user_input.strip())
         else:
             Exit(Exit.EXIT_XML_STRUCTURE)
-        
 
     @staticmethod
     def writeI(instr, frame, output_stream):
@@ -1214,6 +1471,10 @@ class IO():
             else:
                 print(Arithmetic.getIntValue(frame, arg1val),
                       end='', file=output_stream)
+        elif arg1type == "float":
+            arg1val = Arithmetic.getFloatFromString(frame, arg1val)
+            print(Arithmetic.getHexFloat(frame, arg1val),
+                  end='', file=output_stream)
         else:
             Exit(Exit.EXIT_VALUE)
 
@@ -1309,6 +1570,8 @@ class Stack:
         else:
             if instr.args[0]["type"] == "int":
                 instr.arg1 = Arithmetic.getIntValue(frame, instr.arg1)
+            elif instr.args[0]["type"] == "float":
+                instr.arg1 = Arithmetic.getFloatFromString(frame, instr.arg1)
             elif instr.args[0]["type"] == "string":
                 instr.arg1 = IO.handleString(instr.arg1)
             new_const = Constant(instr.args[0]["type"], instr.arg1)
@@ -1332,6 +1595,322 @@ class Stack:
                 instr.arg1)][index].value = temp.value
             frame.frame_now[frame.isDefined(
                 instr.arg1)][index].type = temp.type
+
+    def clears(self):
+        """Vyprázdní dátový zásobník"""
+        self.dataStack.clear()
+
+    def arithmeticStackBase(self, frame, operation):
+        """Vykoná aritmetickú operáciu na operandoch umiestnených na zásobníku podľa zadanej operácie 
+
+        Args:
+            frame (_type_): Rámec
+            operation (_type_): Operácia
+        """
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg2 = self.dataStack.pop()
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg1 = self.dataStack.pop()
+
+        if arg1.type == arg2.type == "int":
+            arg1val = Arithmetic.getIntValue(frame, arg1.value)
+            arg2val = Arithmetic.getIntValue(frame, arg2.value)
+            if operation == "add" and type(arg1val) == int and type(arg2val) == int:
+                arg1.value = arg1val + arg2val
+            elif operation == "sub" and type(arg1val) == int and type(arg2val) == int:
+                arg1.value = arg1val - arg2val
+            elif operation == "mul" and type(arg1val) == int and type(arg2val) == int:
+                arg1.value = arg1val * arg2val
+            elif operation == "idiv" and type(arg1val) == int and type(arg2val) == int:
+                arg1.value = arg1val // arg2val
+            else:
+                Exit(Exit.EXIT_XML_STRUCTURE)
+            self.dataStack.append(arg1)
+        else:
+            Exit(Exit.EXIT_TYPE)
+
+    def relationalStackBase(self, frame, operation):
+        """Vykoná relačnú operáciu na operandoch umiestnených na zásobníku podľa zadanej operácie 
+
+        Args:
+            frame (_type_): Rámec
+            operation (_type_): lt, gt alebo eq
+        """
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg2 = self.dataStack.pop()
+        arg2val = arg2.value
+        arg2type = arg2.type
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg1 = self.dataStack.pop()
+        arg1val = arg1.value
+        arg1type = arg1.type
+
+        if arg1type == "nil" and arg2type == "nil" and operation != "eq":
+            Exit(Exit.EXIT_TYPE)
+        elif arg1type == "nil" and arg2type == "nil" and operation == "eq":
+            arg1.type = "bool"
+            arg1.value = "true"
+            self.dataStack.append(arg1)
+            return
+        elif (arg1type == "nil" or arg2type == "nil") and operation == "eq":
+            arg1.type = "bool"
+            arg1.value = "false"
+            self.dataStack.append(arg1)
+            return
+
+        if arg1type == arg2type:
+            match arg2type:
+                case "int":
+                    arg1val = Arithmetic.getIntValue(frame, arg1.value)
+                    arg2val = Arithmetic.getIntValue(frame, arg2.value)
+                    if type(arg1val) == int and type(arg2val) == int:
+                        match operation:
+                            case "gt":
+                                arg1.value = arg1val > arg2val
+                            case "lt":
+                                arg1.value = arg1val < arg2val
+                            case "eq":
+                                arg1.value = arg1val == arg2val
+                case "float":
+                    arg1val = Arithmetic.getFloatFromString(frame, arg1.value)
+                    arg2val = Arithmetic.getFloatFromString(frame, arg2.value)
+                    if type(arg1val) == float and type(arg2val) == float:
+                        match operation:
+                            case "gt":
+                                arg1.value = arg1val > arg2val
+                            case "lt":
+                                arg1.value = arg1val < arg2val
+                            case "eq":
+                                arg1.value = arg1val == arg2val
+                case "string":
+                    arg1val = IO.handleString(arg1val)
+                    arg2val = IO.handleString(arg2val)
+                    match operation:
+                        case "gt":
+                            arg1.value = arg1val > arg2val
+                        case "lt":
+                            arg1.value = arg1val < arg2val
+                        case "eq":
+                            arg1.value = arg1val == arg2val
+                case "bool":
+                    match operation:
+                        case "gt":
+                            if arg1val == "true" and arg2val == "false":
+                                arg1.value = "true"
+                            else:
+                                arg1.value = "false"
+                        case "lt":
+                            if arg1val == "false" and arg2val == "true":
+                                arg1.value = "true"
+                            else:
+                                arg1.value = "false"
+                        case "eq":
+                            arg1.value = arg1val == arg2val
+
+        else:
+            Exit(Exit.EXIT_TYPE)
+
+        arg1.type = "bool"
+        if arg1.value == True:
+            arg1.value = "true"
+        elif arg1.value == False:
+            arg1.value = "false"
+        self.dataStack.append(arg1)
+
+    def logicalStackBase(self, operation):
+        """Vykoná logickú operáciu na operandoch umiestnených na zásobníku podľa zadanej operácie 
+
+        Args:
+            frame (_type_): Rámec
+            operation (_type_): and, or alebo not
+        """
+        arg2val = None
+        arg2type = None
+        if not self.dataStack and operation != "not":
+            Exit(Exit.EXIT_VALUE)
+        if operation != "not":
+            arg2 = self.dataStack.pop()
+            arg2val = arg2.value
+            arg2type = arg2.type
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg1 = self.dataStack.pop()
+        arg1val = arg1.value
+        arg1type = arg1.type
+
+        if arg1type == "bool" and operation == "not":
+            arg1.value = Logical.notImpl(arg1val)
+        elif operation == "and" and arg1type == "bool" and arg2type == "bool":
+            arg1.value = Logical.andImpl(
+                arg1val, arg2val)
+        elif arg1type == "bool" and arg2type == "bool" and operation == "or":
+            arg1.value = Logical.orImpl(arg1val, arg2val)
+        else:
+            Exit(Exit.EXIT_TYPE)
+
+        arg1.type = "bool"
+        self.dataStack.append(arg1)
+
+    def programFlowStackBase(self, instr, frame, interpret, operation):
+        """Vykoná skok pri rovnosti (operácia ifeq) alebo nerovnosti (operácia ifneq) prvého a druhého argumentu na zásobníku
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+            interpret (_type_): Interpret pre prístup k návestiam
+            operation (_type_): Operácia ifeq alebo ifneq
+
+        Returns:
+            _type_: Pozícia na ktorom sa návestie nachádza
+        """
+
+        jumpPosition = ProgramFlow.jump(instr, interpret)
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg2 = self.dataStack.pop()
+        arg2val = arg2.value
+        arg2type = arg2.type
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg1 = self.dataStack.pop()
+        arg1val = arg1.value
+        arg1type = arg1.type
+
+        if arg1type in ["int", "nil"] and arg2type in ["int", "nil"]:
+            if arg1type != "nil":
+                arg1val = Arithmetic.getIntValue(frame, arg1val)
+            else:
+                arg1val = "nil"
+
+            if arg2type != "nil":
+                arg2val = Arithmetic.getIntValue(frame, arg2val)
+            else:
+                arg2val = "nil"
+
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        elif arg1type in ["float", "nil"] and arg2type in ["float", "nil"]:
+            if arg1type != "nil":
+                arg1val = Arithmetic.getFloatFromString(frame, arg1val)
+            else:
+                arg1val = "nil"
+
+            if arg2type != "nil":
+                arg2val = Arithmetic.getFloatFromString(frame, arg2val)
+            else:
+                arg2val = "nil"
+
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        elif arg1type in ["string", "nil"] and arg2type in ["string", "nil"]:
+            arg1val = IO.handleString(arg1val)
+            arg2val = IO.handleString(arg2val)
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        elif arg1type in ["bool", "nil"] and arg2type in ["bool",  "nil"]:
+            if (arg1val == arg2val and operation == "ifeq") or (arg1val != arg2val and operation == "ifneq"):
+                return jumpPosition
+            else:
+                return False
+        else:
+            Exit(Exit.EXIT_TYPE)
+
+    def adds(self, frame):
+        self.arithmeticStackBase(frame, "add")
+
+    def subs(self, frame):
+        self.arithmeticStackBase(frame, "sub")
+
+    def muls(self, frame):
+        self.arithmeticStackBase(frame, "mul")
+
+    def idivs(self, frame):
+        self.arithmeticStackBase(frame, "idiv")
+
+    def lts(self, frame):
+        self.relationalStackBase(frame, "lt")
+
+    def gts(self, frame):
+        self.relationalStackBase(frame, "gt")
+
+    def eqs(self, frame):
+        self.relationalStackBase(frame, "eq")
+
+    def ands(self):
+        self.logicalStackBase("and")
+
+    def ors(self):
+        self.logicalStackBase("or")
+
+    def nots(self):
+        self.logicalStackBase("not")
+
+    def int2chars(self):
+        """Prevedie číselnú hodnotu druhého argumentu na znak a uloží ho na zásobník
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg1 = self.dataStack.pop()
+        arg1val = arg1.value
+        arg1type = arg1.type
+        if arg1type != "int":
+            Exit(Exit.EXIT_TYPE)
+        try:
+            arg1.value = chr(int(arg1val))
+        except:
+            Exit(Exit.EXIT_STRING)
+        arg1.type = "string"
+        self.dataStack.append(arg1)
+
+    def stri2ints(self, frame):
+        """Uloží číselnú hodnotu znaku (prvý operand) na pozícii (druhý operand) na zásobník
+
+        Args:
+            instr (_type_): Inštrukcia
+            frame (_type_): Rámec
+        """
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg2 = self.dataStack.pop()
+        arg2val = arg2.value
+        arg2type = arg2.type
+        if not self.dataStack:
+            Exit(Exit.EXIT_VALUE)
+        arg1 = self.dataStack.pop()
+        arg1val = arg1.value
+        arg1type = arg1.type
+
+        if arg1type == "string" and arg2type == "int":
+            arg1val = IO.handleString(arg1val)
+            arg2val = Arithmetic.getIntValue(frame, arg2val)
+            if (arg2val != None and arg1val != None) and not (0 <= arg2val < len(arg1val)):
+                Exit(Exit.EXIT_STRING)
+            if arg2val != None and arg1val != None:
+                arg1.value = ord(arg1val[arg2val])
+                arg1.type = "int"
+        else:
+            Exit(Exit.EXIT_TYPE)
+        self.dataStack.append(arg1)
+
+    def jumpifeqs(self, instr, frame, interpret):
+        return self.programFlowStackBase(instr, frame, interpret, "ifeq")
+
+    def jumpifneqs(self, instr, frame, interpret):
+        return self.programFlowStackBase(instr, frame, interpret, "ifneq")
 
 
 class Frame:
@@ -1359,10 +1938,13 @@ class Frame:
             instr (_type_): Inštrukcia
         """
         variable = self.getVar(instr.arg1, none_check=False)
-        if variable != None and (instr.args[1]["type"] == "int" or instr.args[1]["type"] == "bool" or instr.args[1]["type"] == "string" or instr.args[1]["type"] == "nil"):
+        if variable != None and (instr.args[1]["type"] == "int" or instr.args[1]["type"] == "bool" or instr.args[1]["type"] == "string" or instr.args[1]["type"] == "nil" or instr.args[1]["type"] == "float"):
             match instr.args[1]["type"]:
                 case "int":
                     variable.value = Arithmetic.getIntValue(
+                        self, instr.arg2)
+                case "float":
+                    variable.value = Arithmetic.getDecFloat(
                         self, instr.arg2)
                 case _:
                     variable.value = IO.handleString(instr.arg2)
@@ -1388,7 +1970,7 @@ class Frame:
                 else:
                     variable.value = var.type
                 variable.type = "string"
-        elif variable != None and instr.args[1]["type"] in ["int", "bool", "string", "nil"]:
+        elif variable != None and instr.args[1]["type"] in ["int", "bool", "string", "nil", "float"]:
             variable.value = instr.args[1]["type"]
             variable.type = "string"
 
