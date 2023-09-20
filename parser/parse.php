@@ -338,28 +338,28 @@ arg_check($argc, $argv);
 /**Spracovanie inštrukcií zo štandardného vstupu */
 while ($line = fgets(STDIN))
 {
-    $clean = explode(' ', trim($line, "\n"));
+    $exploded_line = explode(' ', trim($line, "\n"));
 
     /**Odstránenie komentárov a bielych znakov zo vstupu */
     /** @var $comment_flag - Značí prítomnosť komentára */
     $comment_flag = false;
-    $new_clean = [];
+    $clean_line = [];
 
-    foreach ($clean as $word)
+    foreach ($exploded_line as $word)
     {
         if (preg_match('/^\s*#.*$/', $word) || preg_match('/#.*$/', $word))
         {
             $comment_flag = true;
-            $new_clean[] = preg_replace('/#.*$/', '', $word);
+            $clean_line[] = preg_replace('/#.*$/', '', $word);
         }
         elseif ($comment_flag == false && $word != "")
         {
-            $new_clean[] = preg_replace('/^\s*$/', '', $word);
+            $clean_line[] = preg_replace('/^\s*$/', '', $word);
         }
     }
 
     /**Odstránenie prázdnych riadkov (whitespaces) zo vstupu */
-    if (empty($new_clean[0]) || $new_clean[0] == "")
+    if (empty($clean_line[0]) || $clean_line[0] == "")
     {
         continue;
     }
@@ -367,7 +367,7 @@ while ($line = fgets(STDIN))
     /**Kontrola prítomnosti hlavičky - IPPcode23 */
     if ($header_flag == false)
     {
-        if (strtoupper($new_clean[0]) !== ".IPPCODE23" || !empty($new_clean[FIRST_OP]))
+        if (strtoupper($clean_line[0]) !== ".IPPCODE23" || !empty($clean_line[FIRST_OP]))
         {
             head_err();
         }
@@ -379,52 +379,52 @@ while ($line = fgets(STDIN))
     }
 
     /**Overenie korektnosti zápisu inštrukcií a vytvorenie XML reprezentácie kódu */
-    switch (strtoupper($new_clean[0]))
+    switch (strtoupper($clean_line[0]))
     {
         case "CREATEFRAME":
         case "PUSHFRAME":
         case "POPFRAME":
         case "RETURN":
         case "BREAK":
-            check_op_number($new_clean, ZERO_OPS);
-            create_XML($new_clean, ZERO_OPS, $instruction++, NULL, NULL, NULL);
+            check_op_number($clean_line, ZERO_OPS);
+            create_XML($clean_line, ZERO_OPS, $instruction++, NULL, NULL, NULL);
             break;
         case "DEFVAR":
         case "POPS":
-            check_op_number($new_clean, ONE_OP);
-            var_check($new_clean[FIRST_OP]);
-            create_XML($new_clean, ONE_OP, $instruction++, "var", NULL, NULL);
+            check_op_number($clean_line, ONE_OP);
+            var_check($clean_line[FIRST_OP]);
+            create_XML($clean_line, ONE_OP, $instruction++, "var", NULL, NULL);
             break;
         case "LABEL":
         case "CALL":
         case "JUMP":
-            check_op_number($new_clean, ONE_OP);
-            label_check($new_clean[FIRST_OP]);
-            create_XML($new_clean, ONE_OP, $instruction++, "label", NULL, NULL);
+            check_op_number($clean_line, ONE_OP);
+            label_check($clean_line[FIRST_OP]);
+            create_XML($clean_line, ONE_OP, $instruction++, "label", NULL, NULL);
             break;
         case "PUSHS":
         case "WRITE":
         case "EXIT":
         case "DPRINT":
-            check_op_number($new_clean, ONE_OP);
-            symb_check($new_clean[FIRST_OP]);
-            create_XML($new_clean, ONE_OP, $instruction++, "symb", NULL, NULL);
+            check_op_number($clean_line, ONE_OP);
+            symb_check($clean_line[FIRST_OP]);
+            create_XML($clean_line, ONE_OP, $instruction++, "symb", NULL, NULL);
             break;
         case "MOVE":
         case "INT2CHAR":
         case "STRLEN":
         case "TYPE":
         case "NOT":
-            check_op_number($new_clean, TWO_OPS);
-            var_check($new_clean[FIRST_OP]);
-            symb_check($new_clean[SECOND_OP]);
-            create_XML($new_clean, TWO_OPS, $instruction++, "var", "symb", NULL);
+            check_op_number($clean_line, TWO_OPS);
+            var_check($clean_line[FIRST_OP]);
+            symb_check($clean_line[SECOND_OP]);
+            create_XML($clean_line, TWO_OPS, $instruction++, "var", "symb", NULL);
             break;
         case "READ":
-            check_op_number($new_clean, TWO_OPS);
-            var_check($new_clean[FIRST_OP]);
-            type_check($new_clean[SECOND_OP]);
-            create_XML($new_clean, TWO_OPS, $instruction++, "var", "type", NULL);
+            check_op_number($clean_line, TWO_OPS);
+            var_check($clean_line[FIRST_OP]);
+            type_check($clean_line[SECOND_OP]);
+            create_XML($clean_line, TWO_OPS, $instruction++, "var", "type", NULL);
             break;
         case "ADD":
         case "SUB":
@@ -439,19 +439,19 @@ while ($line = fgets(STDIN))
         case "CONCAT":
         case "GETCHAR":
         case "SETCHAR":
-            check_op_number($new_clean, THREE_OPS);
-            var_check($new_clean[FIRST_OP]);
-            symb_check($new_clean[SECOND_OP]);
-            symb_check($new_clean[THIRD_OP]);
-            create_XML($new_clean, THREE_OPS, $instruction++, "var", "symb", "symb");
+            check_op_number($clean_line, THREE_OPS);
+            var_check($clean_line[FIRST_OP]);
+            symb_check($clean_line[SECOND_OP]);
+            symb_check($clean_line[THIRD_OP]);
+            create_XML($clean_line, THREE_OPS, $instruction++, "var", "symb", "symb");
             break;
         case "JUMPIFEQ":
         case "JUMPIFNEQ":
-            check_op_number($new_clean, THREE_OPS);
-            label_check($new_clean[FIRST_OP]);
-            symb_check($new_clean[SECOND_OP]);
-            symb_check($new_clean[THIRD_OP]);
-            create_XML($new_clean, THREE_OPS, $instruction++, "label", "symb", "symb");
+            check_op_number($clean_line, THREE_OPS);
+            label_check($clean_line[FIRST_OP]);
+            symb_check($clean_line[SECOND_OP]);
+            symb_check($clean_line[THIRD_OP]);
+            create_XML($clean_line, THREE_OPS, $instruction++, "label", "symb", "symb");
             break;
         default:
             opcode_err();
