@@ -28,24 +28,7 @@ define("ONE_OP", 1);
 define("TWO_OPS", 2);
 define("THREE_OPS", 3);
 
-/** Maximálny rozsah pre prerovnanie poľa */
-define("MAX", 1024);
-
-define("HELP_STRING",
-    "Názov: 
-    parse.php - lexikálny a syntaktický analyzátor jazyka IPPcode23
-
-Použitie: 
-    php8.1 parse.php [MOŽNOSTI]
-
-Popis: 
-    parse.php vykoná lexikálnu a syntaktickú analýzu na zdrojovom súbore 
-    zapísanom v jazyku IPPcode23 a vygeneruje XML reprezentáciu kódu
-
-MOŽNOSTI
-    --help 
-        Vypíše pomocnú hlášku pre skript parse.php"
-);
+define("HELP_STRING", "Názov:\n   parse.php - lexikálny a syntaktický analyzátor jazyka IPPcode23\n\nPoužitie:\n        php8.1 parse.php [MOŽNOSTI]\n\nPopis:\n    parse.php vykoná lexikálnu a syntaktickú analýzu na zdrojovom súbore\n    zapísanom v jazyku IPPcode23 a vygeneruje XML reprezentáciu kódu\n\nMOŽNOSTI\n    --help\n        Vypíše pomocnú hlášku pre skript parse.php");
 
 /**
  * V prípade nevhodného počtu operandov vypíše chybovú hlášku a zavolá funkciu exit()
@@ -147,7 +130,7 @@ function label_check(string $token): void
  */
 function symb_check(string $token): void
 {
-    if (!(preg_match('/^(LF|TF|GF)@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)+[0-9]*(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$/', $token) || preg_match('/^string@([^\s#\\\\]|\\\\\d{3})*$$/', $token) || preg_match('/^bool@(true|false)$/', $token) || preg_match('/^nil@nil$/', $token) || preg_match('/^int@(\+|-){0,1}(([1-9][0-9]*(_[0-9]+)*)|0)$/', $token) || preg_match('/^int@(\+|-){0,1}0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*$/', $token) || preg_match('/^int@(\+|-){0,1}0[oO]?[0-7]+(_[0-7]+)*+$/', $token) ))
+    if (!(preg_match('/^(LF|TF|GF)@(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)+[0-9]*(_|-|\$|&|%|\*|!|\?|[A-Z]|[a-z]|[A-Z]|\?|!|\*|&|%|_|-|\$)*$/', $token) || preg_match('/^string@([^\s#\\\\]|\\\\\d{3})*$$/', $token) || preg_match('/^bool@(true|false)$/', $token) || preg_match('/^nil@nil$/', $token) || preg_match('/^int@(\+|-){0,1}(([1-9][0-9]*(_[0-9]+)*)|0)$/', $token) || preg_match('/^int@(\+|-){0,1}0[xX][0-9a-fA-F]+(_[0-9a-fA-F]+)*$/', $token) || preg_match('/^int@(\+|-){0,1}0[oO]?[0-7]+(_[0-7]+)*+$/', $token)))
     {
         syntax_err();
     }
@@ -202,18 +185,109 @@ function check_op_number(array $stream, int $operand_count): void
     endswitch;
 }
 
-/**Vytvorenie povinnej hlavičky */
-$xml = xmlwriter_open_memory();
-xmlwriter_set_indent($xml, true);
-$res = xmlwriter_set_indent_string($xml, '  ');
-xmlwriter_start_document($xml, '1.0', 'UTF-8');
-xmlwriter_start_element($xml, 'program');
-xmlwriter_start_attribute($xml, 'language');
-xmlwriter_text($xml, 'IPPcode23');
-xmlwriter_end_attribute($xml);
+/**
+ * Spracuje tokeny, ktoré majú typ - symbol
+ * @param string $data
+ * @return array
+ */
+function process_symb(string $data): array
+{
+    if (preg_match('/^int@.*$/', $data))
+    {
+        $data = preg_replace('/^int@/', '', $data);
+        $type = "int";
+    }
+    elseif (preg_match('/^string@.*$/', $data))
+    {
+        $data = preg_replace('/^string@/', '', $data);
+        $type = "string";
+    }
+    elseif (preg_match('/^bool@.*$/', $data))
+    {
+        $data = preg_replace('/^bool@/', '', $data);
+        $type = "bool";
+    }
+    elseif (preg_match('/^nil@.*$/', $data))
+    {
+        $data = preg_replace('/^nil@/', '', $data);
+        $type = "nil";
+    }
+    else
+    {
+        $type = "var";
+    }
 
-/** @var $instruction - Počet inštrukcií*/
-$instruction = 1;
+    $array_to_return = array($data, $type);
+
+    return $array_to_return;
+}
+
+/**
+ * Vytvorí hlavičku XML reprezentácie kódu
+ * @return void
+ */
+function write_xml_header(): void
+{
+    global $xml;
+    $xml = xmlwriter_open_memory();
+    xmlwriter_set_indent($xml, true);
+    $xml->res = xmlwriter_set_indent_string($xml, '  ');
+    xmlwriter_start_document($xml, '1.0', 'UTF-8');
+    xmlwriter_start_element($xml, 'program');
+    xmlwriter_start_attribute($xml, 'language');
+    xmlwriter_text($xml, 'IPPcode23');
+    xmlwriter_end_attribute($xml);
+}
+
+/**
+ * Vytvorí inštrukciu v XML reprezentácii kódu
+ * @param int $inst_number Poradie inštrukcie
+ * @param array $stream Pole obsahujúce meno a parametre inštrukcie
+ * @return void
+ */
+function write_instruction(int $inst_number, array $stream): void
+{
+    global $xml;
+    xmlwriter_start_element($xml, 'instruction');
+    xmlwriter_start_attribute($xml, 'order');
+    xmlwriter_text($xml, $inst_number);
+    xmlwriter_end_attribute($xml);
+    xmlwriter_start_attribute($xml, "opcode");
+    xmlwriter_text($xml, strtoupper($stream[ZERO_OPS]));
+    xmlwriter_end_attribute($xml);
+}
+
+/**
+ * Vytvorí argument v XML reprezentácii kódu
+ * @param string $type Typ operandu inštrukcie
+ * @param array $stream Pole obsahujúce meno a parametre inštrukcie
+ * @param int $argument_number Poradie vytváraného operandu
+ * @return void
+ */
+function write_argument(string $type, array $stream, int $argument_number): void
+{
+    global $xml;
+
+    if ($type === "symb")
+    {
+        $output_array = process_symb($stream[$argument_number]);
+        $data = $output_array[0];
+        $type = $output_array[1];
+    }
+
+    xmlwriter_start_element($xml, 'arg' . $argument_number);
+    xmlwriter_start_attribute($xml, 'type');
+    xmlwriter_text($xml, $type);
+    xmlwriter_end_attribute($xml);
+    if ($type === "int" || $type === "string" || $type === "bool" || $type === "nil")
+    {
+        xmlwriter_text($xml, $data);
+    }
+    else
+        xmlwriter_text($xml, $stream[$argument_number]);
+
+    xmlwriter_end_element($xml);
+}
 
 /**
  * Vytvorí XML reprezentáciu kódu
@@ -229,195 +303,31 @@ function create_XML(array $stream, int $operand_count, int $inst_number, ?string
 {
     global $xml;
 
-    if ($type_1 === "symb")
-    {
-        if (preg_match('/^int@.*$/', $stream[FIRST_OP]))
-        {
-            $data_1 = preg_replace('/^int@/', '', $stream[FIRST_OP]);
-            $type_1 = "int";
-        }
-        elseif (preg_match('/^string@.*$/', $stream[FIRST_OP]))
-        {
-            $data_1 = preg_replace('/^string@/', '', $stream[FIRST_OP]);
-            $type_1 = "string";
-        }
-        elseif (preg_match('/^bool@.*$/', $stream[FIRST_OP]))
-        {
-            $data_1 = preg_replace('/^bool@/', '', $stream[FIRST_OP]);
-            $type_1 = "bool";
-        }
-        elseif (preg_match('/^nil@.*$/', $stream[FIRST_OP]))
-        {
-            $data_1 = preg_replace('/^nil@/', '', $stream[FIRST_OP]);
-            $type_1 = "nil";
-        }
-        else
-        {
-            $type_1 = "var";
-        }
-    }
-
-    if ($type_2 === "symb")
-    {
-        if (preg_match('/^int@.*$/', $stream[SECOND_OP]))
-        {
-            $data_2 = preg_replace('/^int@/', '', $stream[SECOND_OP]);
-            $type_2 = "int";
-        }
-        elseif (preg_match('/^string@.*$/', $stream[SECOND_OP]))
-        {
-            $data_2 = preg_replace('/^string@/', '', $stream[SECOND_OP]);
-            $type_2 = "string";
-        }
-        elseif (preg_match('/^bool@.*$/', $stream[SECOND_OP]))
-        {
-            $data_2 = preg_replace('/^bool@/', '', $stream[SECOND_OP]);
-            $type_2 = "bool";
-        }
-        elseif (preg_match('/^nil@.*$/', $stream[SECOND_OP]))
-        {
-            $data_2 = preg_replace('/^nil@/', '', $stream[SECOND_OP]);
-            $type_2 = "nil";
-        }
-        else
-            $type_2 = "var";
-    }
-
-    if ($type_3 === "symb")
-    {
-        if (preg_match('/^int@.*$/', $stream[THIRD_OP]))
-        {
-            $data_3 = preg_replace('/^int@/', '', $stream[THIRD_OP]);
-            $type_3 = "int";
-        }
-        elseif (preg_match('/^string@.*$/', $stream[THIRD_OP]))
-        {
-            $data_3 = preg_replace('/^string@/', '', $stream[THIRD_OP]);
-            $type_3 = "string";
-        }
-        elseif (preg_match('/^bool@.*$/', $stream[THIRD_OP]))
-        {
-            $data_3 = preg_replace('/^bool@/', '', $stream[THIRD_OP]);
-            $type_3 = "bool";
-        }
-        elseif (preg_match('/^nil@.*$/', $stream[THIRD_OP]))
-        {
-            $data_3 = preg_replace('/^nil@/', '', $stream[THIRD_OP]);
-            $type_3 = "nil";
-        }
-        else
-            $type_3 = "var";
-    }
+    write_instruction($inst_number, $stream);
 
     switch ($operand_count)
     {
-        case ZERO_OPS:
-            xmlwriter_start_element($xml, 'instruction');
-            xmlwriter_start_attribute($xml, 'order');
-            xmlwriter_text($xml, $inst_number);
-            xmlwriter_end_attribute($xml);
-            xmlwriter_start_attribute($xml, "opcode");
-            xmlwriter_text($xml, strtoupper($stream[ZERO_OPS]));
-            xmlwriter_end_attribute($xml);
-            xmlwriter_end_element($xml);
-            break;
         case ONE_OP:
-            xmlwriter_start_element($xml, 'instruction');
-            xmlwriter_start_attribute($xml, 'order');
-            xmlwriter_text($xml, $inst_number);
-            xmlwriter_end_attribute($xml);
-            xmlwriter_start_attribute($xml, "opcode");
-            xmlwriter_text($xml, strtoupper($stream[ZERO_OPS]));
-            xmlwriter_end_attribute($xml);
-
-            xmlwriter_start_element($xml, 'arg1');
-            xmlwriter_start_attribute($xml, 'type');
-            xmlwriter_text($xml, $type_1);
-            xmlwriter_end_attribute($xml);
-            if ($type_1 === "int" || $type_1 === "string" || $type_1 === "bool" || $type_1 === "nil")
-            {
-                xmlwriter_text($xml, $data_1);
-            }
-            else
-                xmlwriter_text($xml, $stream[FIRST_OP]);
-
-            xmlwriter_end_element($xml);
-            xmlwriter_end_element($xml);
+            write_argument($type_1, $stream, ONE_OP);
             break;
         case TWO_OPS:
-            xmlwriter_start_element($xml, 'instruction');
-            xmlwriter_start_attribute($xml, 'order');
-            xmlwriter_text($xml, $inst_number);
-            xmlwriter_end_attribute($xml);
-            xmlwriter_start_attribute($xml, "opcode");
-            xmlwriter_text($xml, strtoupper($stream[ZERO_OPS]));
-            xmlwriter_end_attribute($xml);
-
-            xmlwriter_start_element($xml, 'arg1');
-            xmlwriter_start_attribute($xml, 'type');
-            xmlwriter_text($xml, $type_1);
-            xmlwriter_end_attribute($xml);
-            xmlwriter_text($xml, $stream[FIRST_OP]);
-            xmlwriter_end_element($xml);
-
-            xmlwriter_start_element($xml, 'arg2');
-            xmlwriter_start_attribute($xml, 'type');
-            xmlwriter_text($xml, $type_2);
-            xmlwriter_end_attribute($xml);
-            if ($type_2 === "int" || $type_2 === "string" || $type_2 === "bool" || $type_2 === "nil")
-            {
-                xmlwriter_text($xml, $data_2);
-            }
-            else
-                xmlwriter_text($xml, $stream[SECOND_OP]);
-            xmlwriter_end_element($xml);
-            xmlwriter_end_element($xml);
-
+            write_argument($type_1, $stream, ONE_OP);
+            write_argument($type_2, $stream, TWO_OPS);
             break;
         case THREE_OPS:
-            xmlwriter_start_element($xml, 'instruction');
-            xmlwriter_start_attribute($xml, 'order');
-            xmlwriter_text($xml, $inst_number);
-            xmlwriter_end_attribute($xml);
-            xmlwriter_start_attribute($xml, "opcode");
-            xmlwriter_text($xml, strtoupper($stream[ZERO_OPS]));
-            xmlwriter_end_attribute($xml);
-
-            xmlwriter_start_element($xml, 'arg1');
-            xmlwriter_start_attribute($xml, 'type');
-            xmlwriter_text($xml, $type_1);
-            xmlwriter_end_attribute($xml);
-            xmlwriter_text($xml, $stream[FIRST_OP]);
-            xmlwriter_end_element($xml);
-
-            xmlwriter_start_element($xml, 'arg2');
-            xmlwriter_start_attribute($xml, 'type');
-            xmlwriter_text($xml, $type_2);
-            xmlwriter_end_attribute($xml);
-            if ($type_2 === "int" || $type_2 === "string" || $type_2 === "bool" || $type_2 === "nil")
-            {
-                xmlwriter_text($xml, $data_2);
-            }
-            else
-                xmlwriter_text($xml, $stream[SECOND_OP]);
-            xmlwriter_end_element($xml);
-
-            xmlwriter_start_element($xml, 'arg3');
-            xmlwriter_start_attribute($xml, 'type');
-            xmlwriter_text($xml, $type_3);
-            xmlwriter_end_attribute($xml);
-            if ($type_3 === "int" || $type_3 === "string" || $type_3 === "bool" || $type_3 === "nil")
-            {
-                xmlwriter_text($xml, $data_3);
-            }
-            else
-                xmlwriter_text($xml, $stream[THIRD_OP]);
-
-            xmlwriter_end_element($xml);
-            xmlwriter_end_element($xml);
+            write_argument($type_1, $stream, ONE_OP);
+            write_argument($type_2, $stream, TWO_OPS);
+            write_argument($type_3, $stream, THREE_OPS);
             break;
     }
+    xmlwriter_end_element($xml);
 }
+
+/**Vytvorenie povinnej hlavičky */
+write_xml_header();
+
+/** @var $instruction - Počet inštrukcií*/
+$instruction = 1;
 
 /** @var $header_flag - Značí prítomnosť hlavičky - IPPcode23 */
 $header_flag = false;
@@ -430,53 +340,26 @@ while ($line = fgets(STDIN))
 {
     $clean = explode(' ', trim($line, "\n"));
 
-    /**Odstránenie komentárov zo vstupu*/
-    $pos = 0;
-    for ($i = 0; $i < MAX; $i++)
+    /**Odstránenie komentárov a bielych znakov zo vstupu */
+    /** @var $comment_flag - Značí prítomnosť komentára */
+    $comment_flag = false;
+    $new_clean = [];
+
+    foreach ($clean as $word)
     {
-        if (!empty($clean[$i]) && preg_match('/^#.*/', $clean[$i]))
+        if (preg_match('/^\s*#.*$/', $word) || preg_match('/#.*$/', $word))
         {
-            if ($i === 0)
-            {
-                $pos++;
-            }
-            else
-                $pos = $i;
-            $clean[$i] = '';
+            $comment_flag = true;
+            $new_clean[] = preg_replace('/#.*$/', '', $word);
         }
-        if ($pos !== 0 && !empty($clean[$i]))
+        elseif ($comment_flag == false && $word != "")
         {
-            $clean[$i] = '';
-        }
-    }
-    $pos = 0;
-    for ($i = 0; $i < MAX; $i++)
-    {
-        if (!empty($clean[$i]) && preg_match('/#/', $clean[$i]))
-        {
-            $clean[$i] = preg_filter('/#.*/', '', $clean[$i]);
-            $pos++;
-            continue;
-        }
-        if ($pos !== 0 && !empty($clean[$i]))
-        {
-            $clean[$i] = '';
+            $new_clean[] = preg_replace('/^\s*$/', '', $word);
         }
     }
 
-    /** Preusporiadanie riadku v prípade zlého uloženia v poli */
-    $counter = 0;
-    for ($i = 0; $i < MAX; $i++)
-    {
-        if (!empty($clean[$i]))
-        {
-            $clean[$counter++] = $clean[$i];
-        }
-    }
-
-    /**Odstránenie bielych znakov (whitespaces) zo vstupu */
-    $clean = preg_replace('/^\s*$/', '', $clean);
-    if (preg_match('/^\s*$/', $clean[0]))
+    /**Odstránenie prázdnych riadkov (whitespaces) zo vstupu */
+    if (empty($new_clean[0]) || $new_clean[0] == "")
     {
         continue;
     }
@@ -484,7 +367,7 @@ while ($line = fgets(STDIN))
     /**Kontrola prítomnosti hlavičky - IPPcode23 */
     if ($header_flag == false)
     {
-        if (strtoupper($clean[0]) !== ".IPPCODE23" || !empty($clean[FIRST_OP]))
+        if (strtoupper($new_clean[0]) !== ".IPPCODE23" || !empty($new_clean[FIRST_OP]))
         {
             head_err();
         }
@@ -496,52 +379,52 @@ while ($line = fgets(STDIN))
     }
 
     /**Overenie korektnosti zápisu inštrukcií a vytvorenie XML reprezentácie kódu */
-    switch (strtoupper($clean[0]))
+    switch (strtoupper($new_clean[0]))
     {
         case "CREATEFRAME":
         case "PUSHFRAME":
         case "POPFRAME":
         case "RETURN":
         case "BREAK":
-            check_op_number($clean, ZERO_OPS);
-            create_XML($clean, ZERO_OPS, $instruction++, NULL, NULL, NULL);
+            check_op_number($new_clean, ZERO_OPS);
+            create_XML($new_clean, ZERO_OPS, $instruction++, NULL, NULL, NULL);
             break;
         case "DEFVAR":
         case "POPS":
-            check_op_number($clean, ONE_OP);
-            var_check($clean[FIRST_OP]);
-            create_XML($clean, ONE_OP, $instruction++, "var", NULL, NULL);
+            check_op_number($new_clean, ONE_OP);
+            var_check($new_clean[FIRST_OP]);
+            create_XML($new_clean, ONE_OP, $instruction++, "var", NULL, NULL);
             break;
         case "LABEL":
         case "CALL":
         case "JUMP":
-            check_op_number($clean, ONE_OP);
-            label_check($clean[FIRST_OP]);
-            create_XML($clean, ONE_OP, $instruction++, "label", NULL, NULL);
+            check_op_number($new_clean, ONE_OP);
+            label_check($new_clean[FIRST_OP]);
+            create_XML($new_clean, ONE_OP, $instruction++, "label", NULL, NULL);
             break;
         case "PUSHS":
         case "WRITE":
         case "EXIT":
         case "DPRINT":
-            check_op_number($clean, ONE_OP);
-            symb_check($clean[FIRST_OP]);
-            create_XML($clean, ONE_OP, $instruction++, "symb", NULL, NULL);
+            check_op_number($new_clean, ONE_OP);
+            symb_check($new_clean[FIRST_OP]);
+            create_XML($new_clean, ONE_OP, $instruction++, "symb", NULL, NULL);
             break;
         case "MOVE":
         case "INT2CHAR":
         case "STRLEN":
         case "TYPE":
         case "NOT":
-            check_op_number($clean, TWO_OPS);
-            var_check($clean[FIRST_OP]);
-            symb_check($clean[SECOND_OP]);
-            create_XML($clean, TWO_OPS, $instruction++, "var", "symb", NULL);
+            check_op_number($new_clean, TWO_OPS);
+            var_check($new_clean[FIRST_OP]);
+            symb_check($new_clean[SECOND_OP]);
+            create_XML($new_clean, TWO_OPS, $instruction++, "var", "symb", NULL);
             break;
         case "READ":
-            check_op_number($clean, TWO_OPS);
-            var_check($clean[FIRST_OP]);
-            type_check($clean[SECOND_OP]);
-            create_XML($clean, TWO_OPS, $instruction++, "var", "type", NULL);
+            check_op_number($new_clean, TWO_OPS);
+            var_check($new_clean[FIRST_OP]);
+            type_check($new_clean[SECOND_OP]);
+            create_XML($new_clean, TWO_OPS, $instruction++, "var", "type", NULL);
             break;
         case "ADD":
         case "SUB":
@@ -556,19 +439,19 @@ while ($line = fgets(STDIN))
         case "CONCAT":
         case "GETCHAR":
         case "SETCHAR":
-            check_op_number($clean, THREE_OPS);
-            var_check($clean[FIRST_OP]);
-            symb_check($clean[SECOND_OP]);
-            symb_check($clean[THIRD_OP]);
-            create_XML($clean, THREE_OPS, $instruction++, "var", "symb", "symb");
+            check_op_number($new_clean, THREE_OPS);
+            var_check($new_clean[FIRST_OP]);
+            symb_check($new_clean[SECOND_OP]);
+            symb_check($new_clean[THIRD_OP]);
+            create_XML($new_clean, THREE_OPS, $instruction++, "var", "symb", "symb");
             break;
         case "JUMPIFEQ":
         case "JUMPIFNEQ":
-            check_op_number($clean, THREE_OPS);
-            label_check($clean[FIRST_OP]);
-            symb_check($clean[SECOND_OP]);
-            symb_check($clean[THIRD_OP]);
-            create_XML($clean, THREE_OPS, $instruction++, "label", "symb", "symb");
+            check_op_number($new_clean, THREE_OPS);
+            label_check($new_clean[FIRST_OP]);
+            symb_check($new_clean[SECOND_OP]);
+            symb_check($new_clean[THIRD_OP]);
+            create_XML($new_clean, THREE_OPS, $instruction++, "label", "symb", "symb");
             break;
         default:
             opcode_err();
