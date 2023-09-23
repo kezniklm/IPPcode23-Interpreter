@@ -1,0 +1,6 @@
+.IPPcode23
+
+CREATEFRAME
+PUSHFRAME
+
+CONCAT LF@undefined string@abc string@def

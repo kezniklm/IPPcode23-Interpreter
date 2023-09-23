@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<program language="IPPcode23">
+  <instruction order="1" opcode="DEFVAR">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="2" opcode="DEFVAR">
+    <arg1 type="var">GF@x</arg1>
+  </instruction>
+  <instruction order="3" opcode="DEFVAR">
+    <arg1 type="var">GF@y</arg1>
+  </instruction>
+  <instruction order="4" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="int">40</arg2>
+  </instruction>
+  <instruction order="5" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="int">2</arg2>
+  </instruction>
+  <instruction order="6" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="7" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="8" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="int">40</arg2>
+  </instruction>
+  <instruction order="9" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="int">40</arg2>
+  </instruction>
+  <instruction order="10" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="11" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="12" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="int">40</arg2>
+  </instruction>
+  <instruction order="13" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="14" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="15" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="16" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="17" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="int">40</arg2>
+  </instruction>
+  <instruction order="18" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="19" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="20" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="int">0</arg2>
+  </instruction>
+  <instruction order="21" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="22" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="23" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="24" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="string">abcd</arg2>
+  </instruction>
+  <instruction order="25" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="string"></arg2>
+  </instruction>
+  <instruction order="26" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="27" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="28" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="string">abcd</arg2>
+  </instruction>
+  <instruction order="29" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="string">ab</arg2>
+  </instruction>
+  <instruction order="30" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="31" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="32" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="string">abcd</arg2>
+  </instruction>
+  <instruction order="33" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="string">abcd</arg2>
+  </instruction>
+  <instruction order="34" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="35" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="36" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="string">\065B</arg2>
+  </instruction>
+  <instruction order="37" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="string">A\066</arg2>
+  </instruction>
+  <instruction order="38" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="39" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="40" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="string">abc</arg2>
+  </instruction>
+  <instruction order="41" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="42" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="43" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="44" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="45" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="string">abc</arg2>
+  </instruction>
+  <instruction order="46" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="47" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="48" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="bool">false</arg2>
+  </instruction>
+  <instruction order="49" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="bool">false</arg2>
+  </instruction>
+  <instruction order="50" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="51" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="52" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="bool">false</arg2>
+  </instruction>
+  <instruction order="53" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="bool">true</arg2>
+  </instruction>
+  <instruction order="54" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="55" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="56" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="bool">true</arg2>
+  </instruction>
+  <instruction order="57" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="bool">false</arg2>
+  </instruction>
+  <instruction order="58" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="59" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="60" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="bool">true</arg2>
+  </instruction>
+  <instruction order="61" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="bool">true</arg2>
+  </instruction>
+  <instruction order="62" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="63" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="64" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="bool">true</arg2>
+  </instruction>
+  <instruction order="65" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="66" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="67" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="68" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="bool">false</arg2>
+  </instruction>
+  <instruction order="69" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="70" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="71" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="72" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="73" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="bool">true</arg2>
+  </instruction>
+  <instruction order="74" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="75" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="76" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="77" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="bool">false</arg2>
+  </instruction>
+  <instruction order="78" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="79" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="80" opcode="MOVE">
+    <arg1 type="var">GF@x</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="81" opcode="MOVE">
+    <arg1 type="var">GF@y</arg1>
+    <arg2 type="nil">nil</arg2>
+  </instruction>
+  <instruction order="82" opcode="EQ">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">GF@x</arg2>
+    <arg3 type="var">GF@y</arg3>
+  </instruction>
+  <instruction order="83" opcode="WRITE">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+</program>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<program language="IPPcode23">
+  <instruction order="1" opcode="CREATEFRAME"/>
+  <instruction order="2" opcode="PUSHFRAME"/>
+  <instruction order="3" opcode="DEFVAR">
+    <arg1 type="var">GF@var</arg1>
+  </instruction>
+  <instruction order="4" opcode="DEFVAR">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="5" opcode="MOVE">
+    <arg1 type="var">LF@var</arg1>
+    <arg2 type="int">1</arg2>
+  </instruction>
+  <instruction order="6" opcode="MOVE">
+    <arg1 type="var">GF@var</arg1>
+    <arg2 type="int">5</arg2>
+  </instruction>
+  <instruction order="7" opcode="LABEL">
+    <arg1 type="label">main</arg1>
+  </instruction>
+  <instruction order="8" opcode="CALL">
+    <arg1 type="label">pseudo_fact</arg1>
+  </instruction>
+  <instruction order="9" opcode="WRITE">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="10" opcode="EXIT">
+    <arg1 type="int">0</arg1>
+  </instruction>
+  <instruction order="11" opcode="LABEL">
+    <arg1 type="label">pseudo_fact</arg1>
+  </instruction>
+  <instruction order="12" opcode="MUL">
+    <arg1 type="var">LF@var</arg1>
+    <arg2 type="var">GF@var</arg2>
+    <arg3 type="var">LF@var</arg3>
+  </instruction>
+  <instruction order="13" opcode="SUB">
+    <arg1 type="var">GF@var</arg1>
+    <arg2 type="var">GF@var</arg2>
+    <arg3 type="int">1</arg3>
+  </instruction>
+  <instruction order="14" opcode="JUMPIFNEQ">
+    <arg1 type="label">call</arg1>
+    <arg2 type="var">GF@var</arg2>
+    <arg3 type="int">0</arg3>
+  </instruction>
+  <instruction order="15" opcode="RETURN"/>
+  <instruction order="16" opcode="LABEL">
+    <arg1 type="label">call</arg1>
+  </instruction>
+  <instruction order="17" opcode="CALL">
+    <arg1 type="label">pseudo_fact</arg1>
+  </instruction>
+  <instruction order="18" opcode="RETURN"/>
+</program>

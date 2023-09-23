@@ -1,0 +1,5 @@
+.IPPcode23
+
+CREATEFRAME
+
+NOT TF@a bool@false

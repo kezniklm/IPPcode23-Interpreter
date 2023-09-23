@@ -1,0 +1,6 @@
+.IPPcode23
+
+CREATEFRAME
+PUSHFRAME
+
+READ LF@a string

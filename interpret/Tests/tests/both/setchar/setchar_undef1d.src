@@ -1,0 +1,5 @@
+.IPPcode23
+
+CREATEFRAME
+
+SETCHAR TF@undefined int@1 string@X

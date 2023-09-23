@@ -1,0 +1,5 @@
+.IPPcode23
+
+LABEL aaa
+
+JUMPIFEQ aaa TF@undefined int@2

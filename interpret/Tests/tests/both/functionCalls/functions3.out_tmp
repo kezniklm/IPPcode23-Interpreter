@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<program language="IPPcode23">
+  <instruction order="1" opcode="CREATEFRAME"/>
+  <instruction order="2" opcode="PUSHFRAME"/>
+  <instruction order="3" opcode="DEFVAR">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="4" opcode="MOVE">
+    <arg1 type="var">LF@var</arg1>
+    <arg2 type="int">1</arg2>
+  </instruction>
+  <instruction order="5" opcode="WRITE">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="6" opcode="CALL">
+    <arg1 type="label">main</arg1>
+  </instruction>
+  <instruction order="7" opcode="WRITE">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="8" opcode="EXIT">
+    <arg1 type="int">0</arg1>
+  </instruction>
+  <instruction order="9" opcode="LABEL">
+    <arg1 type="label">main</arg1>
+  </instruction>
+  <instruction order="10" opcode="CREATEFRAME"/>
+  <instruction order="11" opcode="PUSHFRAME"/>
+  <instruction order="12" opcode="DEFVAR">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="13" opcode="MOVE">
+    <arg1 type="var">LF@var</arg1>
+    <arg2 type="int">2</arg2>
+  </instruction>
+  <instruction order="14" opcode="WRITE">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="15" opcode="CALL">
+    <arg1 type="label">foo</arg1>
+  </instruction>
+  <instruction order="16" opcode="POPFRAME"/>
+  <instruction order="17" opcode="RETURN"/>
+  <instruction order="18" opcode="LABEL">
+    <arg1 type="label">foo</arg1>
+  </instruction>
+  <instruction order="19" opcode="CREATEFRAME"/>
+  <instruction order="20" opcode="PUSHFRAME"/>
+  <instruction order="21" opcode="DEFVAR">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="22" opcode="MOVE">
+    <arg1 type="var">LF@var</arg1>
+    <arg2 type="int">3</arg2>
+  </instruction>
+  <instruction order="23" opcode="WRITE">
+    <arg1 type="var">LF@var</arg1>
+  </instruction>
+  <instruction order="24" opcode="POPFRAME"/>
+  <instruction order="25" opcode="RETURN"/>
+</program>

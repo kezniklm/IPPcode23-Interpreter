@@ -1,0 +1,5 @@
+.IPPcode23
+
+LABEL aaa
+
+JUMPIFEQ aaa bool@true int@2

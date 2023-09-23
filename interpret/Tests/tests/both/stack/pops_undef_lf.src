@@ -1,0 +1,9 @@
+.IPPcode23
+
+PUSHS string@ahoj
+
+CREATEFRAME
+PUSHFRAME
+
+POPS LF@undef
+

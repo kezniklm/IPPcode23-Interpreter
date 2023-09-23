@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<program language="IPPcode23">
+  <instruction order="1" opcode="DEFVAR">
+    <arg1 type="var">GF@a</arg1>
+  </instruction>
+  <instruction order="2" opcode="MOVE">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="string">abcdefg</arg2>
+  </instruction>
+  <instruction order="3" opcode="CREATEFRAME"/>
+  <instruction order="4" opcode="PUSHFRAME"/>
+  <instruction order="5" opcode="SETCHAR">
+    <arg1 type="var">GF@a</arg1>
+    <arg2 type="var">LF@undefined</arg2>
+    <arg3 type="string">X</arg3>
+  </instruction>
+</program>

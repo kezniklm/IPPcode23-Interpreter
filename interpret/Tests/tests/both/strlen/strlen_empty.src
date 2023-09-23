@@ -1,0 +1,7 @@
+.IPPcode23
+
+DEFVAR GF@a
+
+STRLEN GF@a string@
+
+WRITE GF@a

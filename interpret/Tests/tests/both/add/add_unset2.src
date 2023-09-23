@@ -1,0 +1,6 @@
+.IPPcode23
+
+DEFVAR GF@a
+DEFVAR GF@b
+
+ADD GF@a GF@b int@2

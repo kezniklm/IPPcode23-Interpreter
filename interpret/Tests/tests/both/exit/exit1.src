@@ -1,0 +1,6 @@
+.IPPcode23
+
+DEFVAR GF@abc
+MOVE GF@abc int@49
+
+EXIT GF@abc

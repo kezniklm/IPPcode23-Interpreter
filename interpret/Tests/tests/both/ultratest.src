@@ -1,0 +1,398 @@
+.IPPcode23
+DEFVAR GF@testcount
+MOVE GF@testcount int@1
+
+# Aritmetika
+WRITE string@Aritmetika\010
+DEFVAR GF@add
+DEFVAR GF@sub
+DEFVAR GF@mul
+DEFVAR GF@div
+DEFVAR GF@a
+MOVE GF@a int@10
+DEFVAR GF@b
+MOVE GF@b int@5
+ADD GF@add GF@a GF@b
+SUB GF@sub GF@a GF@b
+MUL GF@mul GF@a GF@b
+IDIV GF@div GF@a GF@b
+
+### ADD výpis [1]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA int@15
+MOVE TF@testB GF@add
+PUSHFRAME
+CALL test
+
+### SUB výpis [2]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA int@5
+MOVE TF@testB GF@sub
+PUSHFRAME
+CALL test
+
+### MUL výpis [3]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA int@50
+MOVE TF@testB GF@mul
+PUSHFRAME
+CALL test
+
+### IDIV výpis [4]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA int@2
+MOVE TF@testB GF@div
+PUSHFRAME
+CALL test
+
+# Logika
+DEFVAR GF@lt
+DEFVAR GF@gt
+DEFVAR GF@eq
+DEFVAR GF@and
+DEFVAR GF@or
+DEFVAR GF@not
+
+## Int
+WRITE string@Logika\032-\032int\010
+MOVE GF@a int@10
+MOVE GF@b int@5
+LT GF@lt GF@a GF@b
+GT GF@gt GF@a GF@b
+EQ GF@eq GF@a GF@b
+
+### LT výpis [5]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@lt
+PUSHFRAME
+CALL test
+
+### GT výpis [6]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@gt
+PUSHFRAME
+CALL test
+
+### EQ výpis [7]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@eq
+PUSHFRAME
+CALL test
+
+### EQ výpis (true) [8]
+MOVE GF@b int@10
+EQ GF@eq GF@a GF@b
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@eq
+PUSHFRAME
+CALL test
+
+## String
+WRITE string@Logika\032-\032string\010
+MOVE GF@a string@aaaaa
+MOVE GF@b string@aaa
+LT GF@lt GF@a GF@b
+GT GF@gt GF@a GF@b
+EQ GF@eq GF@a GF@b
+
+### LT výpis [9]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@lt
+PUSHFRAME
+CALL test
+
+### GT výpis [10]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@gt
+PUSHFRAME
+CALL test
+
+### EQ výpis [11]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@eq
+PUSHFRAME
+CALL test
+
+### EQ výpis (true) [12]
+MOVE GF@b string@aaaaa
+EQ GF@eq GF@a GF@b
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@eq
+PUSHFRAME
+CALL test
+
+## Bool
+WRITE string@Logika\032-\032bool\010
+MOVE GF@a bool@true
+MOVE GF@b bool@false
+LT GF@lt GF@a GF@b
+GT GF@gt GF@a GF@b
+EQ GF@eq GF@a GF@b
+AND GF@and GF@a GF@b
+OR GF@or GF@a GF@b
+NOT GF@not GF@b
+
+### LT výpis [13]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@lt
+PUSHFRAME
+CALL test
+
+### GT výpis [14]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@gt
+PUSHFRAME
+CALL test
+
+### EQ výpis [15]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@eq
+PUSHFRAME
+CALL test
+
+### EQ výpis (true) [16]
+MOVE GF@b bool@true
+EQ GF@eq GF@a GF@b
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@eq
+PUSHFRAME
+CALL test
+MOVE GF@b bool@false
+
+### AND výpis [17]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@false
+MOVE TF@testB GF@and
+PUSHFRAME
+CALL test
+
+### OR výpis [18]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@or
+PUSHFRAME
+CALL test
+
+### NOT výpis [19]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA bool@true
+MOVE TF@testB GF@not
+PUSHFRAME
+CALL test
+
+# Loops
+WRITE string@Loops\010
+WRITE string@Zadej\032počet\032iterací:\032
+DEFVAR GF@counter
+MOVE GF@counter int@5
+DEFVAR GF@input
+READ GF@input int
+WRITE GF@input
+WRITE string@\010
+
+LABEL while
+JUMPIFEQ loop_end GF@counter GF@input
+ADD GF@counter GF@counter int@1
+JUMP while
+LABEL loop_end
+
+### Loop výpis [20]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA GF@input
+MOVE TF@testB GF@counter
+PUSHFRAME
+CALL test
+
+# String, typy
+WRITE string@String,\032typy\010
+DEFVAR GF@text
+DEFVAR GF@char
+DEFVAR GF@len
+DEFVAR GF@strtype
+DEFVAR GF@inttype
+DEFVAR GF@uninit
+DEFVAR GF@null
+DEFVAR GF@uninittype
+MOVE GF@null nil@nil
+MOVE GF@text string@ahoj
+STRLEN GF@len GF@text
+
+### STRLEN výpis [21]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA int@4
+MOVE TF@testB GF@len
+PUSHFRAME
+CALL test
+
+GETCHAR GF@char string@asdasd int@2
+
+### GETCHAR výpis [22]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@d
+MOVE TF@testB GF@char
+PUSHFRAME
+CALL test
+
+SETCHAR GF@text int@1 string@a
+SETCHAR GF@text int@3 string@a
+
+### SETCHAR výpis [23]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@aaoa
+MOVE TF@testB GF@text
+PUSHFRAME
+CALL test
+
+
+TYPE GF@strtype GF@text
+
+### TYPE výpis string [24]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@string
+MOVE TF@testB GF@strtype
+PUSHFRAME
+CALL test
+
+TYPE GF@inttype GF@len
+
+### TYPE výpis int [25]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@int
+MOVE TF@testB GF@inttype
+PUSHFRAME
+CALL test
+
+TYPE GF@uninittype GF@uninit
+
+### TYPE výpis uninit [26]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@
+MOVE TF@testB GF@uninittype
+PUSHFRAME
+CALL test
+
+TYPE GF@uninittype GF@null
+
+### TYPE výpis null [27]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@nil
+MOVE TF@testB GF@uninittype
+PUSHFRAME
+CALL test
+
+# Stack
+WRITE string@Stack\010
+DEFVAR GF@firstin
+MOVE GF@firstin string@first_in
+DEFVAR GF@secondin
+MOVE GF@secondin string@second_in
+PUSHS GF@firstin
+PUSHS GF@secondin
+
+### Stack výpis [28]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@second_in
+POPS TF@testB
+PUSHFRAME
+CALL test
+
+### Stack výpis 2 [29]
+CREATEFRAME
+DEFVAR TF@testA
+DEFVAR TF@testB
+MOVE TF@testA string@first_in
+POPS TF@testB
+PUSHFRAME
+CALL test
+
+JUMP end
+
+LABEL test
+WRITE string@Test\032[
+WRITE GF@testcount
+ADD GF@testcount GF@testcount int@1
+WRITE string@]\010\009Očekávaná\032hodnota:\032
+WRITE LF@testA
+WRITE string@\010\009Reálná\032hodnota:\032
+WRITE LF@testB
+WRITE string@\010
+JUMPIFEQ ok LF@testA LF@testB
+WRITE string@\009FAIL!\010
+JUMP test_end
+LABEL ok
+WRITE string@\009OK!\010
+POPFRAME
+RETURN
+LABEL test_end
+POPFRAME
+RETURN
+
+LABEL end

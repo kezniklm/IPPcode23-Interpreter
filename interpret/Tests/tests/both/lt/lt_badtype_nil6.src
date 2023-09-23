@@ -1,0 +1,5 @@
+.IPPcode23
+
+DEFVAR GF@a
+
+LT GF@a bool@false nil@nil
